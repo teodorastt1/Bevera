@@ -1,0 +1,40 @@
+﻿@model List<Bevera.Models.ViewModels.UserRoleRowViewModel>
+
+@{
+    ViewData["Title"] = "Admin панел - роли";
+}
+
+<h1 class="mb-3">@ViewData["Title"]</h1>
+
+<table class="table table-striped align-middle">
+    <thead>
+        <tr>
+            <th>Email</th>
+            <th>Име</th>
+            <th>Телефон</th>
+            <th>Адрес</th>
+            <th>Роля</th>
+            <th></th>
+
+            <th style="width:120px;"></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td>@u.Email</td>
+                <td>@u.FirstName @u.LastName</td>
+                <td>@u.PhoneNumber</td>
+                <td>@u.Address</td>
+                <td>@(u.RoleName ?? "(няма)")</td>
+                <td>
+                    <a class="btn btn-sm btn-primary"
+                       asp-action="Edit"
+                       asp-route-id="@u.UserId">Edit</a>
+                </td>
+
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,32 @@
+﻿@model dynamic
+
+@{
+    int page = Model.Page;
+    int totalPages = Model.TotalPages;
+
+    Func<int, string> urlFor = (p) => $"{Model.BaseUrl}?page={p}&pageSize={Model.PageSize}&status={Model.Status}&q={Model.Q}";
+}
+
+@if (totalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+
+            <li class="page-item @(page == 1 ? "disabled" : "")">
+                <a class="page-link" href="@(page == 1 ? "#" : urlFor(page - 1))">‹</a>
+            </li>
+
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == page ? "active" : "")">
+                    <a class="page-link" href="@urlFor(i)">@i</a>
+                </li>
+            }
+
+            <li class="page-item @(page == totalPages ? "disabled" : "")">
+                <a class="page-link" href="@(page == totalPages ? "#" : urlFor(page + 1))">›</a>
+            </li>
+
+        </ul>
+    </nav>
+}

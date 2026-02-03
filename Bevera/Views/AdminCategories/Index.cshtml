@@ -1,0 +1,151 @@
+﻿@using Bevera.Models.Catalog
+@using Bevera.Models.ViewModels
+@model PagedResult<Category>
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Categories";
+}
+
+<h2 class="mb-3">Categories</h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input name="q" value="@ViewBag.Q" class="form-control" placeholder="Search name..." />
+    </div>
+
+    <div class="col-md-2">
+        <input type="date" name="from" value="@ViewBag.From" class="form-control" />
+    </div>
+
+    <div class="col-md-2">
+        <input type="date" name="to" value="@ViewBag.To" class="form-control" />
+    </div>
+
+    <div class="col-md-2">
+        @{
+            int ps = (int)(ViewBag.PageSize ?? 10);
+        }
+        <select class="form-select" name="pageSize">
+            <option value="5" selected="@(ps == 5)">5</option>
+            <option value="10" selected="@(ps == 10)">10</option>
+            <option value="20" selected="@(ps == 20)">20</option>
+        </select>
+    </div>
+
+    <div class="col-md-2 d-flex gap-2">
+        <button class="btn btn-primary w-100" type="submit">Filter</button>
+        <a class="btn btn-outline-secondary w-100" asp-action="Index">Clear</a>
+    </div>
+</form>
+
+<div class="mb-3">
+    <a class="btn btn-success" asp-action="Create">+ Add Category</a>
+</div>
+
+<table class="table table-bordered table-hover align-middle">
+    <thead class="table-light">
+        <tr>
+            <th style="width:80px;">Image</th>
+            <th>Name</th>
+            <th style="width:120px;">IsActive</th>
+            <th style="width:200px;">Created</th>
+            <th style="width:160px;">Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model.Items.Count == 0)
+        {
+            <tr>
+                <td colspan="5" class="text-center text-muted">No categories.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var c in Model.Items)
+            {
+                <tr class="@(c.IsActive ? "" : "table-secondary")">
+                    <td>
+                        @if (!string.IsNullOrEmpty(c.ImagePath))
+                        {
+                            <img src="@c.ImagePath" style="width:60px;height:60px;object-fit:cover;border-radius:8px;" />
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </td>
+                    <td>@c.Name</td>
+                    <td>
+                        @if (c.IsActive)
+                        {
+                            <span class="badge bg-success">Active</span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger">Inactive</span>
+                        }
+                    </td>
+                    <td>@c.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                    <td class="d-flex gap-2">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Edit" asp-route-id="@c.Id">Edit</a>
+
+                        <form method="post" asp-action="Delete" asp-route-id="@c.Id"
+                              onsubmit="return confirm('Delete category @c.Name ?');">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-danger" type="submit">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@if (Model.TotalPages > 1)
+{
+    <nav class="mt-4">
+        <ul class="pagination justify-content-center">
+
+            <li class="page-item @(Model.HasPrevious ? "" : "disabled")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(Model.Page - 1)"
+                   asp-route-pageSize="@Model.PageSize"
+                   asp-route-q="@ViewBag.Q"
+                   asp-route-from="@ViewBag.From"
+                   asp-route-to="@ViewBag.To">
+                    Previous
+                </a>
+            </li>
+
+            @for (int i = 1; i <= Model.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Page ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="Index"
+                       asp-route-page="@i"
+                       asp-route-pageSize="@Model.PageSize"
+                       asp-route-q="@ViewBag.Q"
+                       asp-route-from="@ViewBag.From"
+                       asp-route-to="@ViewBag.To">
+                        @i
+                    </a>
+                </li>
+            }
+
+            <li class="page-item @(Model.HasNext ? "" : "disabled")">
+                <a class="page-link"
+                   asp-action="Index"
+                   asp-route-page="@(Model.Page + 1)"
+                   asp-route-pageSize="@Model.PageSize"
+                   asp-route-q="@ViewBag.Q"
+                   asp-route-from="@ViewBag.From"
+                   asp-route-to="@ViewBag.To">
+                    Next
+                </a>
+            </li>
+
+        </ul>
+    </nav>
+}

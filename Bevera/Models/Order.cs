@@ -1,5 +1,4 @@
-﻿using Bevera.Models.Enums;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -13,7 +12,7 @@ namespace Bevera.Models
         public string ClientId { get; set; } = "";
         public ApplicationUser Client { get; set; } = null!;
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
 
         [Required, StringLength(20)]
         public string Status { get; set; } = "Pending";
@@ -24,7 +23,6 @@ namespace Bevera.Models
         [Range(0, 99999999)]
         public decimal Total { get; set; }
 
-        // snapshot contact/delivery
         [Required, StringLength(120)]
         public string FullName { get; set; } = "";
 
@@ -37,12 +35,17 @@ namespace Bevera.Models
         [StringLength(200)]
         public string? Address { get; set; }
 
-        public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
-        public ICollection<OrderStatusHistory> History { get; set; } = new List<OrderStatusHistory>();
-       
         public DateTime? UpdatedAt { get; set; }
 
-        public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
-    }
+        public ICollection<OrderItem> Items { get; set; } = new List<OrderItem>();
 
+        // ✅ ОСТАВА САМО ТОВА:
+        public ICollection<OrderStatusHistory> StatusHistory { get; set; } = new List<OrderStatusHistory>();
+
+        public string? InvoiceFileName { get; set; }        // напр. Invoice_123.pdf
+        public string? InvoiceStoredFileName { get; set; }  // уникално име на диска
+        public string? InvoiceContentType { get; set; }     // application/pdf
+        public long? InvoiceFileSize { get; set; }          // bytes
+        public DateTime? InvoiceCreatedAt { get; set; }
+    }
 }

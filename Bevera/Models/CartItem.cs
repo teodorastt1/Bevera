@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Bevera.Models.Catalog;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Bevera.Models

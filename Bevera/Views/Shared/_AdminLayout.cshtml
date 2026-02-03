@@ -1,0 +1,80 @@
+﻿@using Microsoft.AspNetCore.Identity
+@inject UserManager<ApplicationUser> UserManager
+
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewData["Title"] - Bevera Admin</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/admin.css" />
+</head>
+<body>
+
+    <div class="d-flex min-vh-100">
+
+        <!-- SIDEBAR -->
+        <aside class="admin-sidebar p-3">
+            <h4 class="mb-4">Bevera</h4>
+            <p class="text-muted">Admin Panel</p>
+
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Admin" asp-action="Index">Dashboard</a>
+                </li>
+
+                <li class="nav-item mt-3 fw-bold text-muted">Catalog</li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="AdminCategories" asp-action="Index">Categories</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="AdminProducts" asp-action="Index">Products</a>
+                </li>
+
+                <li class="nav-item mt-3 fw-bold text-muted">Orders</li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Orders" asp-action="Index">Orders</a>
+                </li>
+
+                <li class="nav-item mt-3 fw-bold text-muted">Users</li>
+
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="AdminRoles" asp-action="Index">Roles / Users</a>
+                </li>
+            </ul>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-fill">
+
+            <!-- TOP BAR -->
+            <nav class="navbar navbar-light bg-light border-bottom px-4">
+                <span class="navbar-text">
+                    @User.Identity!.Name
+                </span>
+
+                <form asp-area="Identity" asp-page="/Account/Logout" method="post">
+                    <button class="btn btn-outline-danger btn-sm">Logout</button>
+                </form>
+            </nav>
+
+            <!-- PAGE CONTENT -->
+            <div class="container-fluid p-4">
+                @RenderBody()
+            </div>
+
+            <footer class="text-center text-muted py-3 border-top">
+                © 2026 Bevera
+            </footer>
+
+        </main>
+    </div>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+
+</body>
+</html>

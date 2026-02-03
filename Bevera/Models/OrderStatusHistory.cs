@@ -16,7 +16,7 @@ namespace Bevera.Models
         [StringLength(250)]
         public string? Note { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
 
         // кой го е сменил (Admin/Worker)
         [Required]

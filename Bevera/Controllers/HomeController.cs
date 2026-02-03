@@ -15,6 +15,15 @@ namespace Bevera.Controllers
 
         public IActionResult Index()
         {
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                if (User.IsInRole("Admin"))
+                    return RedirectToAction("Index", "Admin");
+
+                if (User.IsInRole("Worker"))
+                    return RedirectToAction("Index", "Worker");
+            }
+
             return View();
         }
 

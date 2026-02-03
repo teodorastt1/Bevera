@@ -1,4 +1,5 @@
 ﻿using Bevera.Models;
+using Bevera.Models.Catalog;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,11 +25,109 @@ namespace Bevera.Data
 
         public DbSet<InventoryMovement> InventoryMovements { get; set; }
 
+        public DbSet<Favorite> Favorites { get; set; } = default!;
+        public DbSet<Review> Reviews { get; set; } = default!;
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+            // ✅ fix за decimal warning-ите
+            builder.Entity<Product>().Property(p => p.Price).HasPrecision(18, 2);
+            builder.Entity<Product>().Property(p => p.VolumeLiters).HasPrecision(18, 3);
+            builder.Entity<Product>().Property(p => p.AlcoholPercent).HasPrecision(5, 2);
+
+            builder.Entity<CartItem>().Property(c => c.UnitPrice).HasPrecision(18, 2);
+            builder.Entity<Order>().Property(o => o.Total).HasPrecision(18, 2);
+            builder.Entity<OrderItem>().Property(oi => oi.UnitPrice).HasPrecision(18, 2);
+            builder.Entity<OrderItem>().Property(oi => oi.LineTotal).HasPrecision(18, 2);
+
+           
+
+            builder.Entity<Category>()
+                .HasIndex(c => c.Name)
+                .IsUnique();
+
+            builder.Entity<Product>()
+                .Property(x => x.AlcoholPercent)
+                .HasPrecision(5, 2);
+
+            // ✅ relationships
+            builder.Entity<Product>()
+                .HasOne(p => p.Category)
+                .WithMany(c => c.Products)
+                .HasForeignKey(p => p.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<ProductImage>()
+                .HasOne(i => i.Product)
+                .WithMany(p => p.Images)
+                .HasForeignKey(i => i.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<InventoryMovement>()
+                .HasOne(m => m.Product)
+                .WithMany()
+                .HasForeignKey(m => m.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<Product>()
+               .Property(p => p.Price)
+               .HasPrecision(18, 2);
+
+            builder.Entity<Product>()
+                .Property(p => p.AlcoholPercent)
+                .HasPrecision(5, 2);
+
+            builder.Entity<Product>()
+                .Property(p => p.VolumeLiters)
+                .HasPrecision(10, 2);
+
+            builder.Entity<CartItem>()
+                .Property(c => c.UnitPrice)
+                .HasPrecision(18, 2);
+
+            builder.Entity<Order>()
+                .Property(o => o.Total)
+                .HasPrecision(18, 2);
+
+            builder.Entity<OrderItem>()
+                .Property(oi => oi.UnitPrice)
+                .HasPrecision(18, 2);
+
+            builder.Entity<OrderItem>()
+                .Property(oi => oi.LineTotal)
+                .HasPrecision(18, 2);
+
+            // ✅ RELATIONSHIPS: да няма OrderId1 shadow FK
+            builder.Entity<OrderStatusHistory>()
+                .HasOne(h => h.Order)
+                .WithMany(o => o.StatusHistory)
+                .HasForeignKey(h => h.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<OrderStatusHistory>()
+                .HasOne(h => h.ChangedByUser)
+                .WithMany()
+                .HasForeignKey(h => h.ChangedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<OrderItem>()
+                .HasOne(i => i.Order)
+                .WithMany(o => o.Items)
+                .HasForeignKey(i => i.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ✅ Favorites: 1 user + 1 product (unique)
+            builder.Entity<Favorite>()
+                .HasIndex(x => new { x.UserId, x.ProductId })
+                .IsUnique();
+
+            // ✅ Reviews: позволяваме 1 review на user за product (по желание)
+            builder.Entity<Review>()
+                .HasIndex(x => new { x.UserId, x.ProductId })
+                .IsUnique();
 
             // ✅ Money
             builder.Entity<Product>()
@@ -115,12 +214,17 @@ namespace Bevera.Data
                 .HasForeignKey(oi => oi.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            // Order -> History (1:N)
             builder.Entity<OrderStatusHistory>()
-                .HasOne(h => h.Order)
-                .WithMany(o => o.History)
-                .HasForeignKey(h => h.OrderId)
-                .OnDelete(DeleteBehavior.Cascade);
+        .HasOne(h => h.Order)
+        .WithMany(o => o.StatusHistory)
+        .HasForeignKey(h => h.OrderId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+            builder.Entity<OrderStatusHistory>()
+                .HasOne(h => h.ChangedByUser)
+                .WithMany()
+                .HasForeignKey(h => h.ChangedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // History -> ChangedByUser (N:1)
             builder.Entity<OrderStatusHistory>()
@@ -150,10 +254,7 @@ namespace Bevera.Data
                 .HasForeignKey(m => m.OrderId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // Unique Slug for categories (ако ползваш slug)
-            builder.Entity<Category>()
-                .HasIndex(c => c.Slug)
-                .IsUnique();
+            
 
             // ==============================
             // Decimal precision (важно за SQL Server)

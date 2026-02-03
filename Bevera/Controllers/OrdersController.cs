@@ -1,7 +1,8 @@
-﻿using Bevera.Data;                  // <-- DbContext namespace
+﻿using Bevera.Data;
 using Bevera.Extensions;
-using Bevera.Models;                // <-- тук трябва да е Order
+using Bevera.Models;
 using Bevera.Models.ViewModels;
+using Bevera.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -13,9 +14,12 @@ namespace Bevera.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        public OrdersController(ApplicationDbContext context)
+        private readonly InvoiceService _invoiceService;
+
+        public OrdersController(ApplicationDbContext context, InvoiceService invoiceService)
         {
             _context = context;
+            _invoiceService = invoiceService;
         }
 
         public async Task<IActionResult> Index(string? status, string? q, int page = 1, int pageSize = 10)
@@ -36,7 +40,7 @@ namespace Bevera.Controllers
                     ((o.Client.FirstName ?? "") + " " + (o.Client.LastName ?? "")).Contains(q));
             }
 
-            query = query.OrderByDescending(o => o.CreatedAt);
+            query = query.OrderByDescending(o => o.ChangedAt);
 
             var paged = await query.ToPagedAsync(page, pageSize);
 
@@ -46,5 +50,34 @@ namespace Bevera.Controllers
 
             return View(paged);
         }
+
+        [Authorize(Roles = "Admin,Worker")]
+        public async Task<IActionResult> DownloadInvoice(int id)
+        {
+            var order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
+            if (order == null) return NotFound();
+
+            // If invoice metadata is missing, generate it.
+            // InvoiceService saves metadata to the database itself.
+            if (string.IsNullOrEmpty(order.InvoiceStoredFileName))
+            {
+                await _invoiceService.GenerateInvoiceAsync(order.Id);
+
+                // Reload order to ensure we have the updated metadata.
+                order = await _context.Orders.FirstOrDefaultAsync(o => o.Id == id);
+                if (order == null) return NotFound();
+
+                if (string.IsNullOrEmpty(order.InvoiceStoredFileName))
+                    return StatusCode(500, "Failed to generate invoice metadata.");
+            }
+
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "invoices", order.InvoiceStoredFileName);
+
+            if (!System.IO.File.Exists(path))
+                return NotFound("Фактурата липсва на сървъра.");
+
+            return PhysicalFile(path, order.InvoiceContentType ?? "application/pdf", order.InvoiceFileName ?? $"Invoice_{order.Id}.pdf");
+        }
+
     }
 }

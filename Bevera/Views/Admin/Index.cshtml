@@ -1,2 +1,66 @@
-﻿<h1>Admin зона</h1>
-<p>Само Admin.</p>
+﻿@model Bevera.Models.ViewModel.AdminDashboardViewModel
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="row g-4">
+
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center p-3">
+            <div class="text-muted">Categories</div>
+            <div class="display-6 fw-bold">@Model.CategoriesCount</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center p-3">
+            <div class="text-muted">Products</div>
+            <div class="display-6 fw-bold">@Model.ProductsCount</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center p-3">
+            <div class="text-muted">Orders</div>
+            <div class="display-6 fw-bold">@Model.OrdersCount</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow-sm text-center p-3 bg-success text-white">
+            <div class="opacity-75">Revenue</div>
+            <div class="display-6 fw-bold">@Model.Revenue.ToString("F2") лв.</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3 bg-warning">
+            <div class="fw-semibold">Pending</div>
+            <div class="display-6 fw-bold">@Model.PendingOrders</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3 bg-info text-white">
+            <div class="fw-semibold">Delivered</div>
+            <div class="display-6 fw-bold">@Model.DeliveredOrders</div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm text-center p-3 bg-danger text-white">
+            <div class="fw-semibold">Low stock</div>
+            <div class="display-6 fw-bold">@Model.LowStockProducts</div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card shadow text-center p-3">
+            <h6>Users</h6>
+            <h2>@Model.UsersCount</h2>
+        </div>
+    </div>
+
+
+</div>

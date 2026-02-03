@@ -1,7 +1,8 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Bevera.Models
+namespace Bevera.Models.Catalog
 {
     public class Brand
     {
@@ -11,6 +12,8 @@ namespace Bevera.Models
         public string Name { get; set; } = "";
 
         public bool IsActive { get; set; } = true;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public ICollection<Product> Products { get; set; } = new List<Product>();
     }

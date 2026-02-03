@@ -1,30 +1,56 @@
-﻿@using Bevera.Models
+﻿@using Bevera.Data
+@using Bevera.Models
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject ApplicationDbContext Db
 
-<ul class="navbar-nav align-items-lg-center gap-2">
+<ul class="navbar-nav align-items-center gap-2">
     @if (SignInManager.IsSignedIn(User))
     {
+        var userId = UserManager.GetUserId(User);
+        var cartCount = Db.CartItems.Count(x => x.UserId == userId);
+        var favCount = Db.Favorites.Count(x => x.UserId == userId);
+
         <li class="nav-item">
-            <a class="nav-link text-white-50" asp-area="Identity" asp-page="/Account/Manage/Index" title="Manage">
-                @User.Identity?.Name
+            <a class="nav-link" asp-controller="Client" asp-action="Profile" title="Profile">
+                <i class="bi bi-person-circle"></i>
+            </a>
+        </li>
+
+        <li class="nav-item">
+            <a class="nav-link position-relative" asp-controller="Cart" asp-action="Index" title="Cart">
+                <i class="bi bi-cart3"></i>
+                @if (cartCount > 0)
+                {
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark">
+                        @cartCount
+                    </span>
+                }
+            </a>
+        </li>
+
+        <li class="nav-item d-none d-lg-inline">
+            <a class="nav-link" asp-controller="Client" asp-action="Favorites" title="Favorites">
+                <i class="bi bi-heart"></i>
+                @if (favCount > 0)
+                {
+                    <span class="ms-1">(@favCount)</span>
+                }
             </a>
         </li>
 
         <li class="nav-item">
             <form class="d-inline" asp-area="Identity" asp-page="/Account/Logout"
                   asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
-                <button type="submit" class="btn btn-link nav-link text-white-50 p-0">
-                    Logout
-                </button>
+                <button type="submit" class="btn btn-link nav-link p-0">Logout</button>
             </form>
         </li>
     }
     else
     {
         <li class="nav-item">
-            <a class="nav-link text-white-50" asp-area="Identity" asp-page="/Account/Login">Login</a>
+            <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
         </li>
         <li class="nav-item">
             <a class="nav-link bevera-login-btn" asp-area="Identity" asp-page="/Account/Register">Register</a>

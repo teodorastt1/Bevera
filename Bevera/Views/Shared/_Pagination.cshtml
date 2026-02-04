@@ -1,32 +1,49 @@
-﻿@model dynamic
+﻿@model Bevera.Models.ViewModels.PaginationViewModel
 
-@{
-    int page = Model.Page;
-    int totalPages = Model.TotalPages;
-
-    Func<int, string> urlFor = (p) => $"{Model.BaseUrl}?page={p}&pageSize={Model.PageSize}&status={Model.Status}&q={Model.Q}";
-}
-
-@if (totalPages > 1)
+@if (Model.TotalPages > 1)
 {
-    <nav class="mt-4">
+    <nav class="mt-3">
         <ul class="pagination justify-content-center">
 
-            <li class="page-item @(page == 1 ? "disabled" : "")">
-                <a class="page-link" href="@(page == 1 ? "#" : urlFor(page - 1))">‹</a>
+            <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="@Model.Action"
+                   asp-controller="@Model.Controller"
+                   asp-all-route-data="@(BuildRoutes(Model, Model.Page - 1))">
+                    Prev
+                </a>
             </li>
 
-            @for (int i = 1; i <= totalPages; i++)
+            @for (int p = 1; p <= Model.TotalPages; p++)
             {
-                <li class="page-item @(i == page ? "active" : "")">
-                    <a class="page-link" href="@urlFor(i)">@i</a>
+                <li class="page-item @(p == Model.Page ? "active" : "")">
+                    <a class="page-link"
+                       asp-action="@Model.Action"
+                       asp-controller="@Model.Controller"
+                       asp-all-route-data="@(BuildRoutes(Model, p))">
+                        @p
+                    </a>
                 </li>
             }
 
-            <li class="page-item @(page == totalPages ? "disabled" : "")">
-                <a class="page-link" href="@(page == totalPages ? "#" : urlFor(page + 1))">›</a>
+            <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link"
+                   asp-action="@Model.Action"
+                   asp-controller="@Model.Controller"
+                   asp-all-route-data="@(BuildRoutes(Model, Model.Page + 1))">
+                    Next
+                </a>
             </li>
 
         </ul>
     </nav>
+}
+
+@functions{
+    private Dictionary<string, string?> BuildRoutes(Bevera.Models.ViewModels.PaginationViewModel m, int page)
+    {
+        var dict = new Dictionary<string, string?>(m.RouteValues);
+        dict["page"] = page.ToString();
+        return dict;
+    }
 }

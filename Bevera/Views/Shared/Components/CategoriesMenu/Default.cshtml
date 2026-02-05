@@ -1,0 +1,16 @@
+﻿@model IEnumerable<Bevera.ViewComponents.CategoriesMenuViewComponent.CategoryMenuItem>
+
+<div class="row g-2">
+    @foreach (var c in Model)
+    {
+        <div class="col-6 col-md-4 col-lg-3">
+            <a class="d-block px-2 py-1 rounded-3 text-decoration-none"
+               style="color:#111; font-weight:600;"
+               asp-controller="Client"
+               asp-action="Category"
+               asp-route-id="@c.Id">
+                @c.Name
+            </a>
+        </div>
+    }
+</div>

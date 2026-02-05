@@ -6,17 +6,15 @@
     <title>@ViewData["Title"] - Bevera</title>
 
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
 
-    <!-- Elegant fonts -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/Bevera.styles.css" asp-append-version="true" />
-    <!-- Cart -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
 
     <style>
         :root {
@@ -25,11 +23,11 @@
         }
 
         body {
-            font-family: 'Poppins',sans-serif;
+            font-family: 'Poppins', sans-serif;
             margin: 0;
         }
 
-        /* Navbar */
+        /* NAVBAR */
         .bevera-navbar {
             background: var(--bevera-dark);
             backdrop-filter: blur(10px);
@@ -37,126 +35,94 @@
             border-bottom: 1px solid rgba(255,255,255,.08);
         }
 
-            .bevera-navbar .navbar-brand {
-                font-family: 'Playfair Display',serif;
-                font-weight: 700;
-                color: #fff !important;
-                font-size: 1.6rem;
-                letter-spacing: .5px;
-            }
-
-            .bevera-navbar .nav-link {
-                color: rgba(255,255,255,.85) !important;
-                font-weight: 600;
-                text-transform: uppercase;
-                letter-spacing: .08em;
-                font-size: .9rem;
-                padding: .75rem 1rem;
-            }
-
-                .bevera-navbar .nav-link:hover {
-                    color: #fff !important;
-                }
-
-        /* Wrapper / fixed navbar offset */
-        .bevera-body-wrap {
-            min-height: 100vh;
+        .bevera-navbar .navbar-brand {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: #fff !important;
+            font-size: 1.6rem;
+            letter-spacing: .5px;
         }
 
-        .page-content {
-            padding-top: 72px;
+        .bevera-navbar .nav-link {
+            color: rgba(255,255,255,.85) !important;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            font-size: .9rem;
+            padding: .75rem 1rem;
         }
 
-        body.home .page-content {
-            padding-top: 0;
+        .bevera-navbar .nav-link:hover {
+            color: #fff !important;
         }
 
-        html {
-            scroll-padding-top: 90px;
-        }
+        /* фикснат navbar offset */
+        .page-content { padding-top: 72px; }
+        body.home .page-content { padding-top: 0; }
+        html { scroll-padding-top: 90px; }
 
-        /* Login / Register button */
-        .bevera-login-btn {
+        /* Search */
+        .bevera-search .form-control {
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,.18);
+            background: rgba(255,255,255,.10);
+            color: #fff;
+        }
+        .bevera-search .form-control::placeholder { color: rgba(255,255,255,.75); }
+        .bevera-search .btn {
+            border-radius: 999px;
             background: var(--bevera-accent);
             border: 0;
-            color: #111 !important;
+            color: #111;
             font-weight: 700;
-            border-radius: 999px;
-            padding: .55rem 1.2rem !important;
         }
 
-            .bevera-login-btn:hover {
-                filter: brightness(.95);
-            }
-
-        /* ==============================
-                   Professional dropdown (Categories)
-                   ============================== */
-        .bevera-dropdown-menu {
-            min-width: 320px;
-            border-radius: 16px;
-            padding: .65rem;
+        /* Mega menu container (центриран, като в примера) */
+        .bevera-mega-menu {
+            width: min(1100px, calc(100vw - 24px));
+            margin: 0 auto;
+            border-radius: 18px;
             border: 1px solid rgba(0,0,0,.08);
-            box-shadow: 0 18px 40px rgba(0,0,0,.18);
+            box-shadow: 0 18px 45px rgba(0,0,0,.18);
+            padding: 18px;
         }
 
-            .bevera-dropdown-menu .dropdown-header {
-                font-weight: 800;
-                letter-spacing: .06em;
-                text-transform: uppercase;
-                font-size: .78rem;
-                color: rgba(0,0,0,.55);
-                margin: .25rem .35rem .35rem;
-            }
+        /* Grid вътре (ако Default.cshtml ползва mega-grid) */
+        .mega-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(180px, 1fr));
+            gap: 22px;
+        }
 
-        .bevera-dd-item {
-            border-radius: 12px;
-            padding: .65rem .75rem;
+        .mega-col-title {
+            font-weight: 800;
+            font-size: 1.05rem;
+            margin-bottom: 10px;
+            color: #0b5566;
+        }
+
+        .mega-link {
+            display: block;
+            padding: 6px 8px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #111;
             font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: .55rem;
         }
 
-            .bevera-dd-item:hover {
-                background: rgba(245,179,1,.16);
-            }
-
-        .dd-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 999px;
-            background: var(--bevera-accent);
-            box-shadow: 0 0 0 4px rgba(245,179,1,.18);
-            flex: 0 0 10px;
+        .mega-link:hover {
+            background: rgba(245,179,1,.16);
         }
 
-        /* Desktop: open on hover (без да чупи mobile) */
-        @@media (min-width: 992px) {
-            .bevera-dropdown .dropdown-menu {
-                display: block;
-                opacity: 0;
-                visibility: hidden;
-                transform: translateY(10px);
-                transition: all .16s ease;
-                margin-top: .5rem;
-                pointer-events: none;
-            }
-
-            .bevera-dropdown:hover .dropdown-menu {
-                opacity: 1;
-                visibility: visible;
-                transform: translateY(0);
-                pointer-events: auto;
-            }
-        }
+        /* НЕ ПОЛЗВАМЕ hover open CSS -> само Bootstrap click (стабилно) */
     </style>
 </head>
 
-<body class="bevera-body-wrap @(ViewData["BodyClass"] ?? "")">
+<body class="@(ViewData["BodyClass"] ?? "")">
     <header>
         <nav class="navbar navbar-expand-lg navbar-dark bevera-navbar fixed-top">
             <div class="container">
+
                 <a class="navbar-brand" asp-controller="Home" asp-action="Index">Bevera</a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#beveraNav">
@@ -164,67 +130,55 @@
                 </button>
 
                 <div class="collapse navbar-collapse" id="beveraNav">
-                    <!-- CENTER MENU -->
-                    <ul class="navbar-nav mx-auto align-items-lg-center">
+
+                    <!-- LEFT MENU -->
+                    <ul class="navbar-nav me-3 align-items-lg-center">
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
 
-                        <li class="nav-item dropdown bevera-dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                Категории
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle"
+                               href="#"
+                               role="button"
+                               data-bs-toggle="dropdown"
+                               data-bs-auto-close="outside"
+                               aria-expanded="false">
+                                По категории
                             </a>
 
-                            <ul class="dropdown-menu bevera-dropdown-menu">
-                                <li><h6 class="dropdown-header">Напитки</h6></li>
-
-                                <li><a class="dropdown-item bevera-dd-item" href="/#cat-beer"><span class="dd-dot"></span> Бира</a></li>
-                                <li><a class="dropdown-item bevera-dd-item" href="/#cat-coke"><span class="dd-dot"></span> Кока-Кола продукти</a></li>
-                                <li><a class="dropdown-item bevera-dd-item" href="/#cat-water"><span class="dd-dot"></span> Минерална вода</a></li>
-                                <li><a class="dropdown-item bevera-dd-item" href="/#cat-juice"><span class="dd-dot"></span> Натурални сокове</a></li>
-                                <li><a class="dropdown-item bevera-dd-item" href="/#cat-energy"><span class="dd-dot"></span> Енергийни напитки</a></li>
-
-                                <li><hr class="dropdown-divider"></li>
-
-                                <li><a class="dropdown-item bevera-dd-item" href="/#cat-alcohol"><span class="dd-dot"></span> Алкохол</a></li>
-                            </ul>
+                            <div class="dropdown-menu bevera-mega-menu">
+                                @await Component.InvokeAsync("CategoriesMenu")
+                            </div>
                         </li>
 
-                        <!-- Работи от всяка страница -->
                         <li class="nav-item">
                             <a class="nav-link" href="/#footer">About</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link" href="/#footer">Contact</a>
                         </li>
-
-                        @if (User.Identity?.IsAuthenticated ?? false)
-                        {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Panels</a>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    @if (User.IsInRole("Admin"))
-                                    {
-                                        <li><a class="dropdown-item" asp-controller="Admin" asp-action="Index">Admin</a></li>
-                                        <li><a class="dropdown-item" asp-controller="AdminRoles" asp-action="Index">Admin Roles</a></li>
-                                    }
-                                    @if (User.IsInRole("Worker") || User.IsInRole("Admin"))
-                                    {
-                                        <li><a class="dropdown-item" asp-controller="Worker" asp-action="Index">Worker</a></li>
-                                    }
-                                    @if (User.IsInRole("Client") || User.IsInRole("Admin"))
-                                    {
-                                        <li><a class="dropdown-item" asp-controller="Client" asp-action="Index">Client</a></li>
-                                    }
-                                </ul>
-                            </li>
-                        }
                     </ul>
+
+                    <!-- SEARCH (center/right) -->
+                    <form class="d-flex bevera-search ms-auto me-3"
+                          method="get"
+                          asp-controller="Client"
+                          asp-action="Search">
+                        <input class="form-control form-control-sm"
+                               name="q"
+                               placeholder="Търси продукт..."
+                               style="min-width:260px;" />
+                        <button class="btn btn-sm ms-2" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
 
                     <!-- RIGHT -->
                     <div class="d-flex align-items-center">
                         <partial name="_LoginPartial" />
                     </div>
+
                 </div>
             </div>
         </nav>

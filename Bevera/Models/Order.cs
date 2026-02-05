@@ -11,7 +11,7 @@ namespace Bevera.Models
         [Required]
         public string ClientId { get; set; } = "";
         public ApplicationUser Client { get; set; } = null!;
-
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime ChangedAt { get; set; } = DateTime.UtcNow;
 
         [Required, StringLength(20)]

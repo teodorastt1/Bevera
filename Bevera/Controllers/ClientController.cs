@@ -21,55 +21,88 @@ namespace Bevera.Controllers
             _userManager = userManager;
         }
 
-        // =========================
-        // CATEGORIES
-        // =========================
+        // /Client/Category/8  (+ filters)
         [HttpGet]
-        public async Task<IActionResult> Category(int id)
+        public async Task<IActionResult> Category(int id, string? q, decimal? minPrice, decimal? maxPrice, bool onlyAvailable = false)
         {
-            // ако Category не е активна -> 404 (нормално)
-            var category = await _db.Categories
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
+            var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
+            if (category == null) return NotFound();
 
-            if (category == null)
-                return NotFound();
-
-            var products = await _db.Products
-                .AsNoTracking()
+            var productsQuery = _db.Products
                 .Where(p => p.CategoryId == id && p.IsActive)
                 .Include(p => p.Images)
                 .OrderBy(p => p.Name)
-                .ToListAsync();
+                .AsQueryable();
 
+            // search
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                q = q.Trim();
+                productsQuery = productsQuery.Where(p => p.Name.Contains(q));
+            }
+
+            // price range
+            if (minPrice.HasValue)
+                productsQuery = productsQuery.Where(p => p.Price >= minPrice.Value);
+
+            if (maxPrice.HasValue)
+                productsQuery = productsQuery.Where(p => p.Price <= maxPrice.Value);
+
+            // only available (не показваме колко, само филтър)
+            if (onlyAvailable)
+                productsQuery = productsQuery.Where(p => p.StockQty > 0);
+
+            var products = await productsQuery.ToListAsync();
+
+            // за да останат стойностите във филтрите след submit
             ViewBag.CategoryName = category.Name;
+            ViewBag.Q = q;
+            ViewBag.MinPrice = minPrice;
+            ViewBag.MaxPrice = maxPrice;
+            ViewBag.OnlyAvailable = onlyAvailable;
 
-            // трябва да имаш Views/Client/Category.cshtml
+            // за сърчицата (ако не си логната -> празно)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var favIds = new List<int>();
+
+            if (!string.IsNullOrEmpty(userId))
+            {
+                favIds = await _db.Favorites
+                    .Where(f => f.UserId == userId)
+                    .Select(f => f.ProductId)
+                    .ToListAsync();
+            }
+
+            ViewBag.FavIds = favIds;
+
             return View(products);
         }
 
-        // =========================
-        // PRODUCT DETAILS
-        // =========================
+        // /Client/Product/5
         [HttpGet]
         public async Task<IActionResult> Product(int id)
         {
             var p = await _db.Products
-                .AsNoTracking()
                 .Include(x => x.Images)
                 .Include(x => x.Category)
                 .FirstOrDefaultAsync(x => x.Id == id && x.IsActive);
 
-            if (p == null)
-                return NotFound();
-
-            // трябва да имаш Views/Client/Product.cshtml
-            return View(p);
+            if (p == null) return NotFound();
+            return View(p); // Views/Client/Product.cshtml
         }
 
-        // =========================
-        // PROFILE
-        // =========================
+        // Search from navbar
+        [HttpGet]
+        public IActionResult Search(string? q)
+        {
+            if (string.IsNullOrWhiteSpace(q))
+                return RedirectToAction("Index", "Home");
+
+            // Ако искаш да пращаме към страница с резултати - ще я направим после.
+            // Засега просто пращаме към Home или към първа категория - НЕ ти го чупя.
+            return RedirectToAction("Index", "Home");
+        }
+
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Profile()
@@ -79,7 +112,8 @@ namespace Bevera.Controllers
 
             var vm = new ClientProfileViewModel
             {
-                FirstName = $"{user.FirstName} {user.LastName}".Trim(),
+                FirstName = user.FirstName,
+                LastName = user.LastName,
                 Email = user.Email ?? "",
                 PhoneNumber = user.PhoneNumber,
                 Address = user.Address,
@@ -87,71 +121,56 @@ namespace Bevera.Controllers
                 Orders = new List<OrderRowVm>()
             };
 
-            // IMPORTANT:
-            // В твоя Order модел НЯМА CreatedAt.
-            // Затова тук ползваме ChangedAt като "дата на създаване/последна промяна".
-            // Ако после добавиш CreatedAt, просто сменяш ChangedAt -> CreatedAt.
-            vm.Orders = await _db.Orders
-                .AsNoTracking()
-                .Where(o => o.ClientId == user.Id)
-                .OrderByDescending(o => o.ChangedAt)
-                .Select(o => new OrderRowVm
-                {
-                    OrderId = o.Id,
-                    CreatedAt = o.ChangedAt,
-                    Total = o.Total,
-                    Status = o.Status
-                })
-                .ToListAsync();
+            // твоят Order модел няма CreatedAt -> ползваме ChangedAt
+            if (_db.Orders != null)
+            {
+                vm.Orders = await _db.Orders
+                    .Where(o => o.ClientId == user.Id)
+                    .OrderByDescending(o => o.ChangedAt)
+                    .Select(o => new OrderRowVm
+                    {
+                        OrderId = o.Id,
+                        CreatedAt = o.ChangedAt,
+                        Total = o.Total,
+                        Status = o.Status
+                    })
+                    .ToListAsync();
+            }
 
             return View(vm); // Views/Client/Profile.cshtml
         }
 
-        // =========================
-        // FAVORITES LIST
-        // =========================
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Favorites()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
-                return Challenge();
+            if (userId == null) return RedirectToAction("Index", "Home");
 
             var favorites = await _db.Favorites
-                .AsNoTracking()
                 .Where(f => f.UserId == userId)
                 .Include(f => f.Product)
                     .ThenInclude(p => p.Images)
                 .OrderByDescending(f => f.CreatedAt)
                 .ToListAsync();
 
-            // ТУК подаваш List<Favorite> -> View-то трябва да е @model List<Favorite> или IEnumerable<Favorite>
             return View(favorites); // Views/Client/Favorites.cshtml
         }
 
-        // =========================
-        // TOGGLE FAVORITE
-        // =========================
         [Authorize]
         [ValidateAntiForgeryToken]
         [HttpPost]
         public async Task<IActionResult> ToggleFavorite(int productId, string? returnUrl = null)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
-                return Challenge();
+            if (userId == null) return RedirectToAction("Index", "Home");
 
             var existing = await _db.Favorites
                 .FirstOrDefaultAsync(f => f.UserId == userId && f.ProductId == productId);
 
             if (existing == null)
             {
-                _db.Favorites.Add(new Favorite
-                {
-                    UserId = userId,
-                    ProductId = productId
-                });
+                _db.Favorites.Add(new Favorite { UserId = userId, ProductId = productId });
             }
             else
             {
@@ -165,5 +184,7 @@ namespace Bevera.Controllers
 
             return RedirectToAction(nameof(Favorites));
         }
+
+
     }
 }

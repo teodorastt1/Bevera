@@ -59,9 +59,20 @@
 
                 <hr class="my-4" />
 
-                <div class="text-muted">
-                    (Следваща стъпка: тук добавяме бутони “Добави в количка” и “Любими”, когато си готова с Cart/Favourites.)
-                </div>
+                <form asp-controller="Client" asp-action="ToggleFavorite" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="productId" value="@Model.Id" />
+                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                    <button type="submit" class="btn btn-outline-danger rounded-pill">
+                        <i class="bi bi-heart"></i> Добави в любими
+                    </button>
+                </form>
+
+                <a class="btn btn-outline-dark rounded-pill ms-2"
+                   asp-controller="Client" asp-action="Favorites">
+                    <i class="bi bi-heart-fill"></i> Любими
+                </a>
+
             </div>
         </div>
 

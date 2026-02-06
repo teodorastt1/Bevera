@@ -2,8 +2,10 @@
 using Bevera.Helpers;
 using Bevera.Models.Catalog;
 using Bevera.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Bevera.Controllers
 {
@@ -95,6 +97,22 @@ namespace Bevera.Controllers
             cart.Remove(productId);
             SaveCart(cart);
             return RedirectToAction("Index");
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<IActionResult> Count()
+        {
+            if (User.Identity?.IsAuthenticated != true)
+                return Json(new { count = 0 });
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Пример:
+            var count = await _db.CartItems.Where(x => x.UserId == userId).SumAsync(x => x.Quantity);
+            count = 0;
+
+            return Json(new { count });
         }
     }
 }

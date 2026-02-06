@@ -333,6 +333,42 @@ body {
     border: 1px solid rgba(0,0,0,.18);
 }
 
+.cart-badge {
+    position: absolute;
+    top: -6px;
+    right: -10px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 6px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    font-weight: 800;
+    background: #AD0B16;
+    color: #fff;
+    box-shadow: 0 8px 18px rgba(173,11,22,.25);
+}
+
+    .cart-badge.pulse {
+        animation: pulse .55s ease;
+    }
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    40% {
+        transform: scale(1.35);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
 
 /* Mobile */
 @media (max-width: 992px) {

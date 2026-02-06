@@ -138,6 +138,8 @@
     </style>
 </head>
 
+
+
 <body class="@(ViewData["BodyClass"] ?? "")">
 
     <header>
@@ -192,6 +194,34 @@
             </div>
         </nav>
     </header>
+
+    <script>
+        (async function () {
+            try {
+                const res = await fetch('/Cart/Count', { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                const data = await res.json();
+
+                const badge = document.getElementById('cartBadge');
+                if (!badge) return;
+
+                const count = Number(data.count || 0);
+                if (count > 0) {
+                    badge.textContent = count;
+                    badge.classList.remove('d-none');
+
+                    // ако току-що е добавено (TempData)
+                    const shouldPulse = '@(TempData["CartPulse"] != null ? "1" : "0")';
+                    if (shouldPulse === "1") {
+                        badge.classList.add('pulse');
+                        setTimeout(() => badge.classList.remove('pulse'), 600);
+                    }
+                } else {
+                    badge.classList.add('d-none');
+                }
+            } catch (e) { }
+        })();
+    </script>
+
 
     <main class="page-content">
         @RenderBody()

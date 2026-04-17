@@ -1,0 +1,65 @@
+﻿@model List<Bevera.Models.Finance.FinanceTransaction>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Финанси";
+    decimal balance = ViewBag.Balance is decimal b ? b : 0m;
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Финанси</div>
+        <h1 class="page-header-bevera__title">Финансов модул</h1>
+        <p class="page-header-bevera__text">Следи движенията по фирмения баланс и историята на приходите и разходите.</p>
+    </div>
+</div>
+
+<div class="supply-two-col mb-4">
+    <div class="supply-card">
+        <h3 class="supply-card__title">Текущ баланс</h3>
+        <p class="supply-card__sub">Наличното фирмено салдо в момента.</p>
+        <div class="supply-stat__value">@balance.ToString("0.00") €</div>
+    </div>
+
+    <div class="supply-card">
+        <h3 class="supply-card__title">Задай начален баланс</h3>
+        <p class="supply-card__sub">Ръчно задаване на начално или ново текущо фирмено салдо.</p>
+        <form method="post" asp-action="SeedBalance" class="d-flex gap-2 flex-wrap align-items-end">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="form-label">Сума</label>
+                <input class="form-control" type="number" name="amount" step="0.01" min="0" />
+            </div>
+            <button class="btn btn-warning bevera-btn-main" type="submit">Запази</button>
+        </form>
+    </div>
+</div>
+
+<div class="supply-card">
+    <h3 class="supply-card__title">История на транзакциите</h3>
+    <p class="supply-card__sub">Последните финансови движения в системата.</p>
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead><tr><th>Дата</th><th>Тип</th><th>Източник</th><th>Описание</th><th>Сума</th></tr></thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="5" class="text-center text-muted py-4">Все още няма транзакции.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    bool income = item.Type == "Income";
+                    <tr>
+                        <td>@item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td>@(income ? "Приход" : "Разход")</td>
+                        <td>@item.Source</td>
+                        <td>@item.Description</td>
+                        <td class="@(income ? "finance-positive" : "finance-negative")">@(income ? "+" : "-")@item.Amount.ToString("0.00") €</td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

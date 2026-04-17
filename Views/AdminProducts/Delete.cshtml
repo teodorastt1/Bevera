@@ -1,0 +1,52 @@
+@model Bevera.Models.Catalog.Product
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Изтриване на продукт";
+    var mainImg = Model.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath ?? Model.Images?.FirstOrDefault()?.ImagePath;
+}
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Каталог</div>
+        <h1 class="page-header-bevera__title">Изтриване на продукт</h1>
+        <p class="page-header-bevera__text">Продуктът ще бъде изтрит само ако не участва в история, поръчки или доставки.</p>
+    </div>
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Назад</a>
+    </div>
+</div>
+<div class="product-form-card">
+    <div class="row g-4 align-items-start">
+        <div class="col-md-3">
+            @if (!string.IsNullOrWhiteSpace(mainImg))
+            {
+                <img src="@mainImg" class="product-current-image" alt="@Model.Name" />
+            }
+            else
+            {
+                <div class="product-current-image product-current-image--empty">Няма снимка</div>
+            }
+        </div>
+        <div class="col-md-9">
+            <div class="row g-3">
+                <div class="col-md-6"><label class="form-label fw-bold">Име</label><div class="form-control bg-light">@Model.Name</div></div>
+                <div class="col-md-6"><label class="form-label fw-bold">SKU</label><div class="form-control bg-light">@(string.IsNullOrWhiteSpace(Model.SKU) ? "—" : Model.SKU)</div></div>
+                <div class="col-md-6"><label class="form-label fw-bold">Категория</label><div class="form-control bg-light">@(Model.Category?.Name ?? "—")</div></div>
+                <div class="col-md-6"><label class="form-label fw-bold">Марка</label><div class="form-control bg-light">@(Model.Brand?.Name ?? "—")</div></div>
+                <div class="col-md-4"><label class="form-label fw-bold">Продажна цена</label><div class="form-control bg-light">@Model.Price.ToString("0.00") €</div></div>
+                <div class="col-md-4"><label class="form-label fw-bold">Наличност</label><div class="form-control bg-light">@Model.StockQty бр.</div></div>
+                <div class="col-md-4"><label class="form-label fw-bold">Милилитри</label><div class="form-control bg-light">@(Model.Ml.HasValue ? $"{Model.Ml} мл" : "—")</div></div>
+                <div class="col-12">
+                    <div class="alert alert-warning mb-0">Ако продуктът вече участва в история, поръчки или доставки, системата ще го маркира като неактивен вместо да го изтрие физически.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="product-form-actions mt-4">
+    <form asp-action="Delete" method="post">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <button type="submit" class="btn btn-danger bevera-btn-main">Изтрий продукта</button>
+    </form>
+    <a asp-action="Index" class="btn btn-outline-secondary">Отказ</a>
+</div>

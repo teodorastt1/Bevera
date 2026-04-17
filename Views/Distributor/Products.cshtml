@@ -1,0 +1,51 @@
+﻿@model Bevera.Models.ViewModels.Distributor.DistributorProductsVm
+@{
+    Layout = "_DistributorLayout";
+    ViewData["Title"] = "Моите продукти";
+}
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Дистрибутор</div>
+        <h1 class="page-header-bevera__title">Каталог на @Model.DistributorName</h1>
+        <p class="page-header-bevera__text">Тук дистрибуторът управлява кои продукти може да доставя. Цената се задава директно върху заявката, а не по продукт.</p>
+    </div>
+</div>
+<div class="supply-card">
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead><tr><th>Продукт</th><th>Категория</th><th>Наличен за доставка</th><th class="text-end">Действие</th></tr></thead>
+            <tbody>
+            @if (!Model.Products.Any())
+            {
+                <tr><td colspan="4" class="text-center text-muted py-4">Няма добавени продукти към този дистрибутор.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Products)
+                {
+                    var formId = $"distProd_{item.Id}";
+                    <tr>
+                        <td class="fw-bold">@item.ProductName</td>
+                        <td>@(item.CategoryName ?? "—")</td>
+                        <td>
+                            <div class="form-check form-switch m-0">
+                                <input form="@formId" class="form-check-input" type="checkbox" name="IsAvailable" value="true" @(item.IsAvailable ? "checked" : null) />
+                            </div>
+                        </td>
+                        <td class="text-end">
+                            <form id="@formId" method="post" asp-action="UpdateProduct" asp-route-distributorId="@Model.DistributorId" class="d-inline">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="Id" value="@item.Id" />
+                                <input type="hidden" name="ProductId" value="@item.ProductId" />
+                                <input type="hidden" name="ProductName" value="@item.ProductName" />
+                                <input type="hidden" name="CategoryName" value="@item.CategoryName" />
+                            </form>
+                            <button form="@formId" class="btn btn-sm btn-primary admin-action-btn" type="submit"><i class="bi bi-floppy"></i> Запази</button>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

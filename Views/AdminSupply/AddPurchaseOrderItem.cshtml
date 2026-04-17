@@ -1,0 +1,101 @@
+@model Bevera.Models.ViewModels.Supply.PurchaseOrderItemCreateVm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Добавяне на продукти";
+    var distributorName = ViewBag.DistributorName as string ?? "дистрибутора";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Добавяне на продукти</h1>
+        <p class="page-header-bevera__text">Избери няколко продукта наведнъж, задай кашони и ги добави към черновата за @distributorName.</p>
+    </div>
+    <div class="page-header-bevera__actions"><a class="btn btn-outline-secondary" asp-action="PurchaseOrderDetails" asp-route-id="@Model.PurchaseOrderId">Назад</a></div>
+</div>
+
+<div class="supply-card">
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="PurchaseOrderId" type="hidden" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+
+        <div class="table-responsive">
+            <table class="table supply-table align-middle">
+                <thead>
+                    <tr>
+                        <th style="width:70px;">Избор</th>
+                        <th>Продукт</th>
+                        <th style="width:140px;">Кашони</th>
+                        <th style="width:160px;">Бройки в кашон</th>
+                        <th style="width:160px;">Общо бройки</th>
+                        <th style="width:160px;">Ориентир цена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (int i = 0; i < Model.Items.Count; i++)
+                    {
+                        var row = Model.Items[i];
+                        <tr>
+                            <td>
+                                <input asp-for="Items[i].IsSelected" class="form-check-input" />
+                                <input asp-for="Items[i].ProductId" type="hidden" />
+                                <input asp-for="Items[i].ProductName" type="hidden" />
+                                <input asp-for="Items[i].CostPrice" type="hidden" />
+                                <input asp-for="Items[i].HasDistributorPrice" type="hidden" />
+                                <input asp-for="Items[i].IsAvailable" type="hidden" />
+                            </td>
+                            <td>
+                                <div class="fw-bold">@row.ProductName</div>
+                                @if (!row.IsAvailable)
+                                {
+                                    <div class="small text-danger">Този продукт е маркиран като неналичен при дистрибутора.</div>
+                                }
+                            </td>
+                            <td>
+                                <input asp-for="Items[i].CasesCount" class="form-control js-cases" />
+                            </td>
+                            <td>
+                                <input asp-for="Items[i].UnitsPerCase" class="form-control js-units" />
+                            </td>
+                            <td>
+                                <input class="form-control js-total-units" value="@row.RequestedUnits" readonly />
+                            </td>
+                            <td>
+                                <input class="form-control" value="@row.CostPrice.ToString("0.00") €" readonly />
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+            <button class="btn btn-warning bevera-btn-main" type="submit">Добави избраните продукти</button>
+            <a class="btn btn-outline-secondary" asp-action="PurchaseOrderDetails" asp-route-id="@Model.PurchaseOrderId">Отказ</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.querySelectorAll("tbody tr").forEach(row => {
+                const casesInput = row.querySelector(".js-cases");
+                const unitsInput = row.querySelector(".js-units");
+                const totalUnitsInput = row.querySelector(".js-total-units");
+
+                function syncUnits() {
+                    const casesValue = parseInt(casesInput?.value || '0');
+                    const unitsValue = parseInt(unitsInput?.value || '0');
+                    totalUnitsInput.value = Math.max(casesValue, 0) * Math.max(unitsValue, 0);
+                }
+
+                if (casesInput) casesInput.addEventListener("input", syncUnits);
+                if (unitsInput) unitsInput.addEventListener("input", syncUnits);
+                syncUnits();
+            });
+        });
+    </script>
+}

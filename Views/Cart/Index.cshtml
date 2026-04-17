@@ -1,0 +1,166 @@
+﻿@model List<Bevera.Models.ViewModels.CartItemVm>
+
+@{
+    ViewData["Title"] = "Количка";
+    var grand = (decimal)(ViewBag.GrandTotal ?? 0m);
+}
+
+<style>
+    :root {
+        --c1: #A1937E;
+        --c2: #594836;
+        --c3: #4D1519;
+        --c4: #301413;
+        --c5: #170704;
+    }
+
+    .cart-title {
+        font-family: 'Playfair Display',serif;
+        font-size: 2.2rem;
+    }
+
+    .cart-card {
+        border: 1px solid rgba(0,0,0,.06);
+        border-radius: 18px;
+        overflow: hidden;
+    }
+
+    .cart-table th {
+        font-weight: 600;
+        color: var(--c2);
+    }
+
+    .qty-box {
+        display: inline-flex;
+        align-items: center;
+        gap: .5rem;
+        padding: .25rem .5rem;
+        border: 1px solid rgba(0,0,0,.1);
+        border-radius: 999px;
+    }
+
+    .qty-btn {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        border: 0;
+        background: var(--c1);
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .qty-val {
+        min-width: 24px;
+        text-align: center;
+        font-weight: 600;
+    }
+
+    .btn-soft {
+        border-radius: 999px;
+        border: 0;
+        padding: .6rem 1rem;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    .btn-continue {
+        background: var(--c2);
+        color: #fff;
+    }
+
+    .btn-update {
+        background: var(--c1);
+        color: #fff;
+    }
+
+    .btn-checkout {
+        background: var(--c3);
+        color: #fff;
+    }
+
+    .btn-remove {
+        border: 0;
+        background: transparent;
+        color: var(--c3);
+        font-size: 1.2rem;
+    }
+</style>
+
+<div class="container py-4">
+    <div class="cart-title mb-3">Вашата количка</div>
+
+    <div class="cart-card p-3">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="text-muted p-3">Количката е празна.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle cart-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Продукт</th>
+                            <th style="width:140px;">Снимка</th>
+                            <th style="width:140px;">Ед. цена</th>
+                            <th style="width:220px;">Количество</th>
+                            <th style="width:140px;">Общо</th>
+                            <th style="width:60px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.Name</td>
+                                <td>
+                                    <img src="@item.ImagePath" alt="@item.Name" style="width:70px;height:70px;object-fit:contain;" />
+                                </td>
+                                <td>@item.UnitPrice.ToString("0.00") €</td>
+                                <td>
+                                    <div class="qty-box">
+                                        <form asp-controller="Cart" asp-action="Update" method="post" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <input type="hidden" name="qty" value="@(item.Quantity - 1)" />
+                                            <button class="qty-btn" type="submit" aria-label="Намали количеството">-</button>
+                                        </form>
+
+                                        <div class="qty-val">@item.Quantity</div>
+
+                                        <form asp-controller="Cart" asp-action="Update" method="post" class="m-0">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="productId" value="@item.ProductId" />
+                                            <input type="hidden" name="qty" value="@(item.Quantity + 1)" />
+                                            <button class="qty-btn" type="submit" aria-label="Увеличи количеството">+</button>
+                                        </form>
+                                    </div>
+                                </td>
+                                <td class="fw-semibold">@item.Total.ToString("0.00") €</td>
+                                <td class="text-end">
+                                    <form asp-controller="Cart" asp-action="Remove" method="post" class="m-0">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="productId" value="@item.ProductId" />
+                                        <button class="btn-remove" title="Премахни" type="submit" aria-label="Премахни продукта">✖</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="d-flex justify-content-end mt-3">
+                <div class="fw-semibold" style="color:var(--c2);">
+                    Общо: <span style="color:var(--c3);">@grand.ToString("0.00") €</span>
+                </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-between mt-3">
+                <a class="btn-soft btn-continue" asp-controller="Home" asp-action="Index">Продължи с пазаруването</a>
+                <a class="btn-soft btn-update" asp-controller="Cart" asp-action="Index">Обнови количката</a>
+                <a class="btn-soft btn-checkout" asp-controller="Cart" asp-action="Checkout">Поръчай</a>
+            </div>
+        }
+    </div>
+</div>

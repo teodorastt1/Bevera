@@ -1,0 +1,465 @@
+using Bevera.Data;
+using Bevera.Helpers;
+using Bevera.Models;
+using Bevera.Models.Catalog;
+using Bevera.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
+
+namespace Bevera.Controllers
+{
+    public class CartController : Controller
+    {
+        private readonly ApplicationDbContext _db;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private const string CartKey = "CART";
+
+        public CartController(ApplicationDbContext db, UserManager<ApplicationUser> userManager)
+        {
+            _db = db;
+            _userManager = userManager;
+        }
+
+        private Dictionary<int, int> GetCart()
+            => HttpContext.Session.GetObject<Dictionary<int, int>>(CartKey) ?? new Dictionary<int, int>();
+
+        private void SaveCart(Dictionary<int, int> cart)
+            => HttpContext.Session.SetObject(CartKey, cart);
+
+        [HttpGet]
+        public async Task<IActionResult> Index()
+        {
+            var cart = GetCart();
+            var ids = cart.Keys.ToList();
+
+            var products = await _db.Set<Product>()
+                .Where(p => ids.Contains(p.Id))
+                .Include(p => p.Images)
+                .ToListAsync();
+
+            var items = products.Select(p =>
+            {
+                var img = p.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
+                          ?? p.Images?.FirstOrDefault()?.ImagePath
+                          ?? "/images/image-1.jpg";
+
+                return new CartItemVm
+                {
+                    ProductId = p.Id,
+                    Name = p.Name,
+                    ImagePath = img,
+                    UnitPrice = p.EffectivePrice,
+                    Quantity = cart[p.Id]
+                };
+            }).OrderBy(i => i.Name).ToList();
+
+            ViewBag.GrandTotal = items.Sum(i => i.Total);
+            return View(items);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Add(int productId, int qty = 1, string? returnUrl = null)
+        {
+            if (qty < 1) qty = 1;
+
+            var product = await _db.Products
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+
+            if (product == null)
+            {
+                TempData["FlashMessage"] = "Продуктът не е намерен.";
+                TempData["FlashType"] = "danger";
+                return RedirectToAction("Index", "Home");
+            }
+
+            var available = product.StockQty;
+
+            if (available <= 0)
+            {
+                TempData["FlashMessage"] = $"{product.Name} няма наличност. Очаквайте ново зареждане.";
+                TempData["FlashType"] = "danger";
+                return !string.IsNullOrWhiteSpace(returnUrl)
+                    ? LocalRedirect(returnUrl)
+                    : RedirectToAction(nameof(Index));
+            }
+
+            var cart = GetCart();
+            var current = cart.ContainsKey(productId) ? cart[productId] : 0;
+            var desired = current + qty;
+
+            if (desired > available)
+            {
+                desired = available;
+                TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Остават {available} бр.";
+                TempData["FlashType"] = "warning";
+            }
+
+            cart[productId] = desired;
+            SaveCart(cart);
+
+            TempData["CartPulse"] = 1;
+
+            if (!string.IsNullOrWhiteSpace(returnUrl))
+                return LocalRedirect(returnUrl);
+
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Update(int productId, int qty)
+        {
+            var cart = GetCart();
+
+            if (qty <= 0)
+            {
+                cart.Remove(productId);
+            }
+            else
+            {
+                var product = await _db.Products
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(p => p.Id == productId && p.IsActive);
+
+                if (product == null)
+                {
+                    cart.Remove(productId);
+                    TempData["FlashMessage"] = "Продуктът вече не е наличен.";
+                    TempData["FlashType"] = "danger";
+                }
+                else
+                {
+                    var available = product.StockQty;
+
+                    if (available <= 0)
+                    {
+                        cart.Remove(productId);
+                        TempData["FlashMessage"] = $"{product.Name} в момента не е наличен.";
+                        TempData["FlashType"] = "danger";
+                    }
+                    else
+                    {
+                        if (qty > available)
+                        {
+                            qty = available;
+                            TempData["FlashMessage"] = $"Няма достатъчно наличност за {product.Name}. Остават {available} бр.";
+                            TempData["FlashType"] = "warning";
+                        }
+
+                        cart[productId] = qty;
+                    }
+                }
+            }
+
+            SaveCart(cart);
+            return RedirectToAction("Index");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Remove(int productId)
+        {
+            var cart = GetCart();
+            cart.Remove(productId);
+            SaveCart(cart);
+            return RedirectToAction("Index");
+        }
+
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult Count()
+        {
+            var cart = GetCart();
+            var count = cart.Values.Sum();
+            return Json(new { count });
+        }
+
+        // =========================
+        // CHECKOUT (payment simulation)
+        // =========================
+
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Checkout()
+        {
+            var cart = GetCart();
+            if (cart.Count == 0) return RedirectToAction(nameof(Index));
+
+            var ids = cart.Keys.ToList();
+            var products = await _db.Products
+                .Where(p => ids.Contains(p.Id) && p.IsActive)
+                .Include(p => p.Images)
+                .ToListAsync();
+
+            var items = products.Select(p => new CheckoutItemVm
+            {
+                ProductId = p.Id,
+                Name = p.Name,
+                UnitPrice = p.EffectivePrice,
+                Quantity = cart[p.Id]
+            }).ToList();
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = string.IsNullOrWhiteSpace(userId)
+                ? null
+                : await _userManager.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
+
+            var lastOrder = string.IsNullOrWhiteSpace(userId)
+                ? null
+                : await _db.Orders
+                    .AsNoTracking()
+                    .Where(o => o.ClientId == userId)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+            var vm = new CheckoutVm
+            {
+                Items = items,
+                Total = items.Sum(i => i.Total),
+                FullName = lastOrder?.FullName ?? $"{user?.FirstName} {user?.LastName}".Trim(),
+                Email = lastOrder?.Email ?? user?.Email,
+                Phone = lastOrder?.Phone ?? user?.PhoneNumber,
+                City = ExtractCity(lastOrder?.Address),
+                Address = ExtractStreetAddress(lastOrder?.Address) ?? user?.Address,
+                HasSavedProfile = lastOrder != null || user != null
+            };
+
+            return View(vm);
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Checkout(CheckoutVm vm)
+        {
+            var cart = GetCart();
+            if (cart.Count == 0) return RedirectToAction(nameof(Index));
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var savedOrder = await _db.Orders
+                .AsNoTracking()
+                .Where(o => o.ClientId == userId)
+                .OrderByDescending(o => o.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            var currentUser = await _userManager.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (vm.UseSavedProfile)
+            {
+                vm.FullName = savedOrder?.FullName ?? vm.FullName ?? $"{currentUser?.FirstName} {currentUser?.LastName}".Trim();
+                vm.Email = savedOrder?.Email ?? vm.Email ?? currentUser?.Email;
+                vm.Phone = savedOrder?.Phone ?? vm.Phone ?? currentUser?.PhoneNumber;
+                vm.City = savedOrder != null ? ExtractCity(savedOrder.Address) ?? vm.City : vm.City;
+                vm.Address = savedOrder != null ? ExtractStreetAddress(savedOrder.Address) ?? vm.Address : (vm.Address ?? currentUser?.Address);
+            }
+
+            var ids = cart.Keys.ToList();
+            var products = await _db.Products
+                .Where(p => ids.Contains(p.Id) && p.IsActive)
+                .ToListAsync();
+
+            foreach (var p in products)
+            {
+                var qty = cart[p.Id];
+                var available = p.StockQty;
+
+                if (available < qty)
+                {
+                    ModelState.AddModelError("", $"Няма достатъчно наличност за: {p.Name}. Налично: {available}");
+                }
+            }
+
+            if (!ModelState.IsValid)
+            {
+                vm.Items = products.Select(p => new CheckoutItemVm
+                {
+                    ProductId = p.Id,
+                    Name = p.Name,
+                    UnitPrice = p.EffectivePrice,
+                    Quantity = cart[p.Id]
+                }).ToList();
+
+                vm.Total = vm.Items.Sum(i => i.Total);
+                return View(vm);
+            }
+
+            var isCard = vm.PaymentMethod == "card";
+
+            if (!isCard)
+            {
+                vm.CardHolder = null;
+                vm.CardNumber = null;
+                vm.ExpMonth = null;
+                vm.ExpYear = null;
+                vm.Cvc = null;
+            }
+
+            await using var tx = await _db.Database.BeginTransactionAsync();
+
+            var order = new Order
+            {
+                ClientId = userId,
+                CreatedAt = DateTime.UtcNow,
+                ChangedAt = DateTime.UtcNow,
+                Status = OrderStates.Submitted,
+                PaymentStatus = isCard ? PaymentStates.Paid : PaymentStates.Unpaid,
+                PaidOn = isCard ? DateTime.UtcNow : null,
+                FullName = vm.FullName ?? "",
+                Email = vm.Email ?? "",
+                Phone = vm.Phone?.Trim(),
+                Address = $"{(vm.City ?? "").Trim()}, {(vm.Address ?? "").Trim()}".Trim().Trim(','),
+                Total = products.Sum(p => p.EffectivePrice * cart[p.Id])
+            };
+
+            _db.Orders.Add(order);
+            await _db.SaveChangesAsync();
+
+            foreach (var p in products)
+            {
+                var qty = cart[p.Id];
+
+                _db.OrderItems.Add(new OrderItem
+                {
+                    OrderId = order.Id,
+                    ProductId = p.Id,
+                    ProductName = p.Name,
+                    Quantity = qty,
+                    UnitPrice = p.EffectivePrice,
+                    LineTotal = p.EffectivePrice * qty
+                });
+
+                p.StockQty -= qty;
+                if (p.StockQty < 0)
+                    p.StockQty = 0;
+
+
+                _db.InventoryMovements.Add(new Bevera.Models.Inventory.InventoryMovement
+                {
+                    ProductId = p.Id,
+                    QuantityDelta = -qty,
+                    Type = "OUT",
+                    Note = $"Order #{order.Id} checkout",
+                    CreatedAt = DateTime.UtcNow,
+                    CreatedByUserId = userId,
+                    OrderId = order.Id
+                });
+            }
+
+            _db.OrderStatusHistories.Add(new OrderStatusHistory
+            {
+                OrderId = order.Id,
+                Status = OrderStates.Submitted,
+                Note = isCard ? "Плащане: карта (симулация, прието)." : "Плащане: наложен платеж (очаква се).",
+                ChangedAt = DateTime.UtcNow,
+                ChangedByUserId = userId
+            });
+
+            await _db.SaveChangesAsync();
+
+            // =========================
+            // NOTIFICATIONS
+            // =========================
+
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            var workers = await _userManager.GetUsersInRoleAsync("Worker");
+
+            foreach (var admin in admins)
+            {
+                _db.AppNotifications.Add(new AppNotification
+                {
+                    UserId = admin.Id,
+                    Message = $"Нова поръчка №{order.Id} беше направена.",
+                    Type = "Order",
+                    Url = $"/Orders/Details/{order.Id}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            foreach (var worker in workers)
+            {
+                _db.AppNotifications.Add(new AppNotification
+                {
+                    UserId = worker.Id,
+                    Message = $"Има нова поръчка №{order.Id} за обработка.",
+                    Type = "Order",
+                    Url = $"/Orders/Details/{order.Id}",
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            foreach (var p in products)
+            {
+                var currentAvailable = p.StockQty;
+
+                if (currentAvailable > 0 && currentAvailable <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 10))
+                {
+                    foreach (var admin in admins)
+                    {
+                        _db.AppNotifications.Add(new AppNotification
+                        {
+                            UserId = admin.Id,
+                            Message = $"Ниска наличност: {p.Name} (оставащи: {currentAvailable}).",
+                            Type = "LowStock",
+                            Url = "/AdminProducts/Index",
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+
+                    foreach (var worker in workers)
+                    {
+                        _db.AppNotifications.Add(new AppNotification
+                        {
+                            UserId = worker.Id,
+                            Message = $"Ниска наличност: {p.Name} (оставащи: {currentAvailable}).",
+                            Type = "LowStock",
+                            Url = "/Worker/LowStock",
+                            CreatedAt = DateTime.UtcNow
+                        });
+                    }
+                }
+            }
+
+            _db.AppNotifications.Add(new AppNotification
+            {
+                UserId = userId,
+                Message = $"Поръчката ви №{order.Id} беше приета успешно.",
+                Type = "Order",
+                Url = "/Client/Profile",
+                CreatedAt = DateTime.UtcNow
+            });
+
+            await _db.SaveChangesAsync();
+            await tx.CommitAsync();
+
+            SaveCart(new Dictionary<int, int>());
+
+            TempData["OrderSuccess"] = "Поръчката е направена успешно!";
+            return RedirectToAction("Profile", "Client");
+        }
+    
+        private static string? ExtractCity(string? fullAddress)
+        {
+            if (string.IsNullOrWhiteSpace(fullAddress))
+                return null;
+
+            var parts = fullAddress.Split(',', 2, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length > 0 ? parts[0] : null;
+        }
+
+        private static string? ExtractStreetAddress(string? fullAddress)
+        {
+            if (string.IsNullOrWhiteSpace(fullAddress))
+                return null;
+
+            var parts = fullAddress.Split(',', 2, StringSplitOptions.TrimEntries);
+            return parts.Length > 1 ? parts[1] : fullAddress;
+        }
+    }
+}

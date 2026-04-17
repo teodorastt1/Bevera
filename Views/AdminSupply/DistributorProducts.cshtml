@@ -1,0 +1,76 @@
+﻿@model List<Bevera.Models.ViewModels.Supply.DistributorProductVm>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Ценова листа";
+    var distributor = ViewBag.Distributor as Bevera.Models.Supply.Distributor;
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Ценова листа</h1>
+        <p class="page-header-bevera__text">@(distributor != null ? $"Продукти и доставни цени за {distributor.Name}." : "Продукти и доставни цени.")</p>
+    </div>
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-warning bevera-btn-main" asp-action="AddDistributorProduct" asp-route-distributorId="@distributor?.Id">+ Добави продукт</a>
+        <a class="btn btn-outline-secondary" asp-action="Distributors">Назад</a>
+    </div>
+</div>
+
+<div class="supply-card">
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead>
+                <tr>
+                    <th>Продукт</th>
+                    <th>Текуща цена</th>
+                    <th>Статус</th>
+                    <th class="text-end" style="width:320px;">Обновяване</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="4" class="text-center text-muted py-4">Няма продукти в ценовата листа.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@item.ProductName</td>
+                        <td>@item.CostPrice.ToString("0.00") €</td>
+                        <td>
+                            <span class="supply-status @(item.IsAvailable ? "supply-status--received" : "supply-status--inactive")">
+                                @(item.IsAvailable ? "Наличен" : "Скрит")
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                <form method="post" asp-action="UpdateDistributorProduct" class="d-flex gap-2 align-items-center flex-wrap justify-content-end">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="Id" value="@item.Id" />
+                                    <input type="hidden" name="DistributorId" value="@item.DistributorId" />
+                                    <input type="hidden" name="ProductId" value="@item.ProductId" />
+                                    <input type="hidden" name="ProductName" value="@item.ProductName" />
+                                    <input type="text" inputmode="decimal" name="CostPrice" value="@item.CostPrice.ToString("0.00")" class="form-control" style="max-width:110px;" />
+                                    <input type="hidden" name="IsAvailable" value="false" />
+                                    <div class="form-check form-switch m-0 pt-1">
+                                        <input class="form-check-input" type="checkbox" name="IsAvailable" value="true" @(item.IsAvailable ? "checked" : "") />
+                                    </div>
+                                    <button class="btn btn-sm btn-primary" type="submit">Запази</button>
+                                </form>
+
+                                <form method="post" asp-action="DeleteDistributorProduct" asp-route-id="@item.Id" onsubmit="return confirm('Сигурна ли си, че искаш да премахнеш този продукт от ценовата листа?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Премахни</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

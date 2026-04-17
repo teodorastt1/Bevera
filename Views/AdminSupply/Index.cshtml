@@ -1,0 +1,73 @@
+﻿@model Bevera.Models.ViewModels.Supply.SupplyDashboardVm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Supply табло";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки и финанси</div>
+        <h1 class="page-header-bevera__title">Supply табло</h1>
+        <p class="page-header-bevera__text">Проследявай фирмения баланс, разходите и заявките към дистрибутори.</p>
+    </div>
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-warning bevera-btn-main" asp-action="CreatePurchaseOrder">+ Нова заявка</a>
+        <a class="btn btn-outline-secondary" asp-action="Distributors">Дистрибутори</a>
+    </div>
+</div>
+
+<div class="supply-grid mb-4">
+    <div class="supply-stat"><div class="supply-stat__label">Фирмен баланс</div><div class="supply-stat__value">@Model.CompanyBalance.ToString("0.00") €</div></div>
+    <div class="supply-stat"><div class="supply-stat__label">Общо приходи</div><div class="supply-stat__value">@Model.TotalIncome.ToString("0.00") €</div></div>
+    <div class="supply-stat"><div class="supply-stat__label">Общо разходи</div><div class="supply-stat__value">@Model.TotalExpenses.ToString("0.00") €</div></div>
+    <div class="supply-stat"><div class="supply-stat__label">Брутна печалба</div><div class="supply-stat__value">@Model.GrossProfit.ToString("0.00") €</div></div>
+</div>
+
+<div class="supply-grid mb-4">
+    <div class="supply-stat"><div class="supply-stat__label">Дистрибутори</div><div class="supply-stat__value">@Model.DistributorsCount</div></div>
+    <div class="supply-stat"><div class="supply-stat__label">Чернови</div><div class="supply-stat__value">@Model.DraftOrdersCount</div></div>
+    <div class="supply-stat"><div class="supply-stat__label">Изпратени</div><div class="supply-stat__value">@Model.SubmittedOrdersCount</div></div>
+    <div class="supply-stat"><div class="supply-stat__label">Получени</div><div class="supply-stat__value">@Model.ReceivedOrdersCount</div></div>
+</div>
+
+<div class="supply-card">
+    <h3 class="supply-card__title">Последни заявки</h3>
+    <p class="supply-card__sub">Най-новите заявки към дистрибутори.</p>
+
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Дистрибутор</th>
+                    <th>Статус</th>
+                    <th>Сума</th>
+                    <th>Дата</th>
+                    <th class="text-end">Действие</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.LatestOrders.Any())
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">Все още няма създадени заявки.</td></tr>
+            }
+            else
+            {
+                foreach (var order in Model.LatestOrders)
+                {
+                    var statusClass = order.Status == "Draft" ? "supply-status--draft" : order.Status == "SentToDistributor" ? "supply-status--submitted" : order.Status == "InPreparation" ? "supply-status--approved" : order.Status == "SentToAdmin" ? "supply-status--approved" : order.Status == "Paid" ? "supply-status--received" : "supply-status--inactive";
+                    var statusText = order.Status == "Draft" ? "Чернова" : order.Status == "SentToDistributor" ? "Изпратена към дистрибутор" : order.Status == "InPreparation" ? "В подготовка" : order.Status == "SentToAdmin" ? "Чака плащане" : order.Status == "Paid" ? "Платена и заредена" : order.Status;
+                    <tr>
+                        <td>#@order.Id</td>
+                        <td>@order.DistributorName</td>
+                        <td><span class="supply-status @statusClass">@statusText</span></td>
+                        <td>@order.TotalAmount.ToString("0.00") €</td>
+                        <td>@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="PurchaseOrderDetails" asp-route-id="@order.Id">Детайли</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Питиетата</title>
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/home-index.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/Bevera.styles.css" asp-append-version="true" />
+
+    <style>
+            :root {
+                --brand-accent: #f5b301;
+                --brand-dark: rgba(10, 12, 14, .72);
+            }
+
+            body {
+                font-family: 'Poppins', sans-serif;
+                margin: 0;
+            }
+
+            /* ================= NAVBAR ================= */
+
+            .bevera-navbar {
+                background: var(--brand-dark);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-bottom: 1px solid rgba(255,255,255,.08);
+                height: 72px;
+                padding: 0;
+            }
+
+                .bevera-navbar .navbar-brand {
+                    display: flex;
+                    align-items: center;
+                    padding: 0;
+                    margin-right: 20px;
+                }
+
+            .brand-logo {
+                height: 110px;
+                width: auto;
+            }
+
+            /* ================= NAV LINKS ================= */
+
+            .bevera-navbar .nav-link {
+                color: rgba(255,255,255,.85) !important;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: .08em;
+                font-size: .9rem;
+                padding: .75rem 1rem;
+                transition: color .2s ease, transform .2s ease;
+            }
+
+                .bevera-navbar .nav-link:hover {
+                    color: #fff !important;
+                    transform: translateY(-1px);
+                }
+
+            /* ================= SEARCH ================= */
+
+            .bevera-search {
+                width: 280px;
+                max-width: 42vw;
+            }
+
+                .bevera-search input {
+                    border-radius: 999px;
+                    background: rgba(255,255,255,.10);
+                    border: 1px solid rgba(255,255,255,.18);
+                    color: #fff;
+                }
+
+                    .bevera-search input::placeholder {
+                        color: rgba(255,255,255,.65);
+                    }
+
+                    .bevera-search input:focus {
+                        border-color: rgba(245,179,1,.5);
+                        box-shadow: 0 0 0 .2rem rgba(245,179,1,.18);
+                        background: rgba(255,255,255,.14);
+                        color: #fff;
+                    }
+
+                .bevera-search button {
+                    border-radius: 999px;
+                    background: var(--brand-accent);
+                    border: 0;
+                    font-weight: 800;
+                    color: #111;
+                    padding-inline: 14px;
+                }
+
+                    .bevera-search button:hover {
+                        filter: brightness(.97);
+                    }
+
+            /* ================= PAGE TRANSITION ================= */
+
+            .page-content {
+                padding-top: 78px;
+                opacity: 0;
+                transform: translateY(12px);
+                transition: opacity .45s ease, transform .45s ease;
+            }
+
+            body.page-loaded .page-content {
+                opacity: 1;
+                transform: none;
+            }
+
+            body.home .page-content {
+                padding-top: 0;
+            }
+
+            .page-fade-in {
+                animation: pageFadeIn .38s ease;
+            }
+
+            @@keyframes pageFadeIn {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            /* ================= PROMO LINK ================= */
+
+            .promo-nav-link {
+                color: #d94b5c !important;
+                position: relative;
+                font-weight: 700 !important;
+                transition: color .2s ease, text-shadow .2s ease, transform .2s ease;
+            }
+
+                .promo-nav-link:hover {
+                    color: #ff6b7d !important;
+                    text-shadow: 0 0 10px rgba(217,75,92,.25);
+                    transform: translateY(-1px);
+                }
+
+                .promo-nav-link::after {
+                    content: "";
+                    position: absolute;
+                    left: 1rem;
+                    right: 1rem;
+                    bottom: 8px;
+                    height: 2px;
+                    border-radius: 999px;
+                    background: linear-gradient(90deg, rgba(217,75,92,0), rgba(217,75,92,.95), rgba(217,75,92,0));
+                    transform: scaleX(.35);
+                    opacity: .75;
+                    transition: transform .2s ease, opacity .2s ease;
+                }
+
+                .promo-nav-link:hover::after {
+                    transform: scaleX(1);
+                    opacity: 1;
+                }
+
+            /* ================= FOOTER ================= */
+
+            .bevera-footer {
+                background: linear-gradient(180deg, #2f3d4d 0%, #2a3644 100%);
+                color: #d7dde4;
+                padding: 35px 0 20px;
+                margin-top: 48px;
+                border-top: 1px solid rgba(255,255,255,.06);
+            }
+
+            .bevera-footer__title {
+                color: #ffffff;
+                font-size: 1rem;
+                font-weight: 800;
+                margin-bottom: 10px;
+                letter-spacing: -0.01em;
+            }
+
+            .bevera-footer__title--center {
+                text-align: center;
+            }
+
+            .bevera-footer__list {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+            }
+
+                .bevera-footer__list li {
+                    margin-bottom: 10px;
+                }
+
+                .bevera-footer__list a {
+                    color: #c3ccd6;
+                    text-decoration: none;
+                    font-size: 0.85rem;
+                    line-height: 1.55;
+                    transition: color .22s ease, transform .22s ease;
+                    display: inline-block;
+                }
+
+                    .bevera-footer__list a:hover {
+                        color: #ffffff;
+                        transform: translateX(3px);
+                    }
+
+            .bevera-footer__contact p {
+                margin-bottom: 8px;
+                font-size: 0.85rem;
+                line-height: 1.55;
+                color: #eef2f6;
+            }
+
+            .bevera-footer__contact strong {
+                color: #ffffff;
+                font-weight: 800;
+            }
+
+            .bevera-footer__text {
+                color: #c3ccd6;
+                font-size: 0.85rem;
+                line-height: 1.6;
+                margin-bottom: 12px;
+            }
+
+            .bevera-footer__text--center {
+                text-align: center;
+            }
+
+            .bevera-newsletter-form {
+                display: flex;
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .bevera-newsletter-input {
+                width: 100%;
+                height: 42px;
+                border: none;
+                outline: none;
+                background: #f2f2f2;
+                color: #2a2a2a;
+                font-size: 0.85rem;
+                padding: 0 14px;
+                border-radius: 8px 8px 0 0;
+            }
+
+                .bevera-newsletter-input::placeholder {
+                    color: #8f8f8f;
+                }
+
+            .bevera-newsletter-btn {
+                border: none;
+                background: #ff0b0b;
+                color: #ffffff;
+                font-size: 0.9rem;
+                font-weight: 800;
+                height: 42px;
+                border-radius: 0 0 8px 8px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 8px;
+                transition: transform .22s ease, filter .22s ease;
+            }
+
+                .bevera-newsletter-btn:hover {
+                    transform: translateY(-1px);
+                    filter: brightness(1.05);
+                }
+
+            .bevera-newsletter-check {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                margin-top: 14px;
+                color: #c3ccd6;
+                font-size: 0.75rem;
+                line-height: 1.5;
+                cursor: pointer;
+            }
+
+                .bevera-newsletter-check input {
+                    margin-top: 3px;
+                    width: 15px;
+                    height: 15px;
+                    accent-color: #ff0b0b;
+                    flex-shrink: 0;
+                }
+
+            .bevera-footer__review-box {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: flex-start;
+            }
+
+            .bevera-footer__google-logo {
+                color: #ffffff;
+                font-size: 1.2rem;
+                font-weight: 900;
+                margin-bottom: 10px;
+                text-align: center;
+                letter-spacing: -0.02em;
+            }
+
+            @@media (max-width: 991px) {
+                .bevera-search {
+                    width: 100%;
+                    max-width: 100%;
+                    margin-top: 12px;
+                }
+
+                .navbar-collapse {
+                    padding-top: 10px;
+                }
+
+                .brand-logo {
+                    height: 64px;
+                }
+
+                .bevera-footer {
+                    padding: 28px 0 18px;
+                    margin-top: 36px;
+                }
+
+                .bevera-footer__title {
+                    font-size: 0.95rem;
+                    margin-bottom: 8px;
+                }
+
+                .bevera-footer__title--center,
+                .bevera-footer__text--center {
+                    text-align: left;
+                }
+
+                .bevera-footer__review-box {
+                    align-items: flex-start;
+                }
+
+                .bevera-footer__google-logo {
+                    text-align: left;
+                }
+            }
+
+            @@media (max-width: 991px) {
+                .bevera-search {
+                    width: 100%;
+                    max-width: 100%;
+                    margin-top: 12px;
+                }
+
+                .navbar-collapse {
+                    padding-top: 10px;
+                }
+
+                .brand-logo {
+                    height: 64px;
+                }
+
+                .bevera-footer {
+                    padding: 55px 0 40px;
+                }
+
+                .bevera-footer__title {
+                    font-size: 1.7rem;
+                    margin-bottom: 18px;
+                }
+
+                .bevera-footer__list a,
+                .bevera-footer__text,
+                .bevera-footer__contact p {
+                    font-size: 1.2rem;
+                }
+
+                .bevera-footer__title--center,
+                .bevera-footer__text--center {
+                    text-align: left;
+                }
+
+                .bevera-footer__review-box,
+                .bevera-footer__socials {
+                    align-items: flex-start;
+                    justify-content: flex-start;
+                }
+
+                .bevera-footer__google-logo {
+                    text-align: left;
+                    margin-bottom: 12px;
+                }
+            }
+    </style>
+</head>
+
+<body class="@(ViewData["BodyClass"] ?? "")">
+
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bevera-navbar fixed-top">
+            <div class="container-fluid px-4 px-lg-5">
+                <a class="navbar-brand brand-logo-wrap" asp-controller="Home" asp-action="Index">
+                    <img src="~/images/logo/logobg.png" alt="Питиетата" class="brand-logo" />
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#beveraNav" aria-controls="beveraNav" aria-expanded="false" aria-label="Отвори меню">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="beveraNav">
+                    <ul class="navbar-nav me-3 align-items-lg-center">
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Home" asp-action="Index">Начало</a>
+                        </li>
+
+                        <li class="nav-item mega-wrapper" id="megaWrapper">
+                            <a href="#" class="nav-link mega-toggle" aria-haspopup="true" aria-expanded="false">
+                                Категории <span class="ms-1">▾</span>
+                            </a>
+
+                            @await Component.InvokeAsync("CategoriesMenu")
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link promo-nav-link" asp-controller="Client" asp-action="Promotions">Промоции</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#footer">За нас</a>
+                        </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link" href="/#footer">Контакт</a>
+                        </li>
+                    </ul>
+
+                    <form class="d-flex bevera-search me-lg-3 ms-lg-auto"
+                          asp-controller="Client"
+                          asp-action="Search"
+                          method="get">
+                        <input class="form-control form-control-sm me-2"
+                               type="text"
+                               name="q"
+                               placeholder="Търси продукт..." />
+                        <button class="btn btn-sm" type="submit" title="Търси">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </form>
+
+                    <div class="d-flex align-items-center ms-lg-2">
+                        <partial name="_LoginPartial" />
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="page-content">
+        @{
+            var msg = TempData["FlashMessage"] as string;
+            var typ = TempData["FlashType"] as string;
+            var orderMsg = TempData["OrderSuccess"] as string;
+
+            if (!string.IsNullOrWhiteSpace(orderMsg) && string.IsNullOrWhiteSpace(msg))
+            {
+                msg = orderMsg;
+                typ = "success";
+            }
+        }
+
+        @if (!string.IsNullOrWhiteSpace(msg))
+        {
+            <div class="js-flash" data-message="@msg" data-type="@((typ ?? "info"))"></div>
+        }
+
+        @{
+            var toastScope = TempData["ToastScope"] as string;
+            var allowPublicToast = string.IsNullOrWhiteSpace(toastScope)
+                                   || string.Equals(toastScope, "client", StringComparison.OrdinalIgnoreCase)
+                                   || string.Equals(toastScope, "global", StringComparison.OrdinalIgnoreCase);
+
+            string? toastMsg = null;
+            string? toastType = null;
+
+            if (allowPublicToast)
+            {
+                toastMsg = TempData["ToastMessage"] as string;
+                toastType = TempData["ToastType"] as string;
+
+                if (string.IsNullOrWhiteSpace(toastMsg))
+                {
+                    toastMsg = TempData["Success"] as string;
+                    if (!string.IsNullOrWhiteSpace(toastMsg))
+                    {
+                        toastType = "success";
+                    }
+                }
+
+                if (string.IsNullOrWhiteSpace(toastMsg))
+                {
+                    toastMsg = TempData["Error"] as string;
+                    if (!string.IsNullOrWhiteSpace(toastMsg))
+                    {
+                        toastType = "error";
+                    }
+                }
+            }
+        }
+
+        @if (!string.IsNullOrWhiteSpace(toastMsg))
+        {
+            <div class="js-toast" data-message="@toastMsg" data-type="@((toastType ?? "info"))"></div>
+        }
+
+        <div class="page-fade-in">@RenderBody()</div>
+    </main>
+
+    @await Component.InvokeAsync("DeliveredOrdersToast")
+
+    <div id="bevera-toast" class="bevera-toast" aria-live="polite" aria-atomic="true"></div>
+
+    <partial name="_CookieConsent" />
+
+    <footer id="footer" class="bevera-footer">
+        <div class="container-fluid px-4 px-lg-5">
+            <div class="row g-3">
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <h6 class="bevera-footer__title">Информация</h6>
+                    <ul class="bevera-footer__list">
+                        <li><a href="#">Общи условия</a></li>
+                        <li><a href="#">За компанията</a></li>
+                        <li><a href="#">Бисквитки</a></li>
+                        <li><a href="#">Онлайн решаване на спорове</a></li>
+                        <li><a href="#">Политика за поверителност</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-2">
+                    <h6 class="bevera-footer__title">За клиента</h6>
+                    <ul class="bevera-footer__list">
+                        <li><a asp-area="Identity" asp-page="/Account/Manage/Index">Моят акаунт</a></li>
+                        <li><a href="#">Често задавани въпроси</a></li>
+                        <li><a href="#">Доставка и плащане</a></li>
+                        <li><a href="#">Как да поръчам</a></li>
+                        <li><a href="/#footer">Контакти</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <h6 class="bevera-footer__title">Контакти</h6>
+                    <div class="bevera-footer__contact">
+                        <p><strong>Фирма:</strong> ПИТИЕТАТА ЕООД</p>
+                        <p><strong>Адрес:</strong> гр. Разград, бул. България</p>
+                        <p><strong>Телефон:</strong> +359 888 123 456</p>
+                        <p><strong>Email:</strong> pitietata@official.bg</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-md-6 col-lg-3">
+                    <h6 class="bevera-footer__title">Бюлетин</h6>
+                    <p class="bevera-footer__text">
+                        Абонирай се за новини и промоции.
+                    </p>
+
+                    <form class="bevera-newsletter-form">
+                        <input type="email" class="bevera-newsletter-input" placeholder="Email" />
+                        <button type="submit" class="bevera-newsletter-btn">
+                            АБОНИРАЙ СЕ
+                        </button>
+
+                        <label class="bevera-newsletter-check">
+                            <input type="checkbox" />
+                            <span>Съгласен съм с условията</span>
+                        </label>
+                    </form>
+                </div>
+
+                <div class="col-12 col-lg-2">
+                    <div class="bevera-footer__review-box">
+                        <div class="bevera-footer__google-logo">★★★★★</div>
+
+                        <h6 class="bevera-footer__title text-center">Google отзиви</h6>
+                        <p class="bevera-footer__text text-center">
+                            Вашето мнение е важно!
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+
+            <hr style="margin-top:25px; opacity:.2;" />
+
+            <p style="text-align:center; font-size:0.85rem; opacity:.7; margin-bottom:0;">
+                © @DateTime.Now.Year Питиетата. Всички права запазени.
+            </p>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+            function showToast(message, type = "info") {
+                const toast = document.getElementById("bevera-toast");
+                if (!toast) return;
+
+                toast.className = "bevera-toast show " + type;
+                toast.textContent = message;
+
+                clearTimeout(window.__beveraToastTimer);
+                window.__beveraToastTimer = setTimeout(() => {
+                    toast.classList.remove("show");
+                }, 4000);
+            }
+
+            document.addEventListener("DOMContentLoaded", function () {
+                document.body.classList.add("page-loaded");
+
+                const toastEl = document.querySelector(".js-toast");
+                if (toastEl) {
+                    const msg = toastEl.getAttribute("data-message");
+                    const type = toastEl.getAttribute("data-type") || "info";
+
+                    if (msg) {
+                        showToast(msg, type);
+                    }
+                }
+            });
+
+            (async function () {
+                try {
+                    const res = await fetch('/Cart/Count', {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+
+                    const data = await res.json();
+                    const badge = document.getElementById('cartBadge');
+
+                    if (!badge) return;
+
+                    const count = Number(data.count || 0);
+
+                    if (count > 0) {
+                        badge.textContent = count;
+                        badge.classList.remove('d-none');
+
+                        const shouldPulse = '@(TempData["CartPulse"] != null ? "1" : "0")';
+                        if (shouldPulse === "1") {
+                            badge.classList.add('pulse');
+                            setTimeout(() => badge.classList.remove('pulse'), 600);
+                        }
+                    } else {
+                        badge.classList.add('d-none');
+                    }
+                } catch (e) { }
+            })();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

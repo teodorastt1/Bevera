@@ -1,0 +1,66 @@
+﻿@model IEnumerable<Bevera.Models.Catalog.Category>
+
+@{
+    var categories = Model?.ToList() ?? new List<Bevera.Models.Catalog.Category>();
+
+    var roots = categories
+        .Where(c => c.ParentCategoryId == null)
+        .OrderBy(c => c.Name)
+        .ToList();
+}
+
+<div class="bevera-mega-menu" id="megaMenu">
+    <div class="mega-menu-head">
+        <div>
+            <div class="mega-menu-title">Категории</div>
+            <div class="mega-menu-subtitle">Разгледай продуктите по групи</div>
+        </div>
+
+        <button type="button" class="mega-close-btn" id="megaCloseBtn" aria-label="Затвори">
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="mega-menu-grid">
+        @foreach (var root in roots)
+        {
+            var children = categories
+                .Where(c => c.ParentCategoryId == root.Id)
+                .OrderBy(c => c.Name)
+                .ToList();
+
+            <div class="mega-category-card">
+                <a class="mega-root-link"
+                       asp-controller="Client"
+                       asp-action="Category"
+                       asp-route-id="@root.Id">
+                    @root.Name
+                </a>
+
+                <div class="mega-sub-list">
+                    @if (children.Any())
+                    {
+                        @foreach (var child in children)
+                        {
+                            <a class="mega-sub-link"
+                                   asp-controller="Client"
+                                   asp-action="Category"
+                                   asp-route-id="@child.Id">
+                                @child.Name
+                            </a>
+                        }
+                    }
+                    else
+                    {
+                        <a class="mega-sub-link"
+                               asp-controller="Client"
+                               asp-action="Category"
+                               asp-route-id="@root.Id">
+                            Виж всички
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

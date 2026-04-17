@@ -1,0 +1,148 @@
+@model Bevera.Models.ViewModels.Distributor.DistributorOrdersVm
+@using Bevera.Helpers
+@{
+    Layout = "_DistributorLayout";
+
+    var isCompletedTab = Model.ActiveTab == "completed";
+    ViewData["Title"] = isCompletedTab ? "Изпълнени заявки" : "Заявки за подготовка";
+
+    var preparingOrders = Model.Orders
+        .Where(x => x.Status == PurchaseOrderStates.SentToDistributor || x.Status == PurchaseOrderStates.InPreparation)
+        .ToList();
+
+    var finishedOrders = Model.Orders
+        .Where(x => x.Status == PurchaseOrderStates.SentToAdmin || x.Status == PurchaseOrderStates.Paid)
+        .ToList();
+
+    var pageTitle = isCompletedTab ? "Изпълнени заявки" : "Заявки за подготовка";
+    var pageText = isCompletedTab
+        ? "Тук виждаш вече изпратените към админ и напълно приключените заявки."
+        : "Тук виждаш само новите и активните заявки, по които трябва да се работи.";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Дистрибутор</div>
+        <h1 class="page-header-bevera__title">@pageTitle</h1>
+        <p class="page-header-bevera__text">@pageText</p>
+    </div>
+</div>
+
+@if (!isCompletedTab)
+{
+    <div class="supply-card">
+        <h3 class="supply-card__title">Заявки за подготовка</h3>
+        <div class="table-responsive">
+            <table class="table supply-table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Статус</th>
+                        <th>Създадена</th>
+                        <th>Сума</th>
+                        <th class="text-end">Детайли</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!preparingOrders.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Няма заявки за подготовка.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in preparingOrders)
+                        {
+                            var statusText = item.Status == PurchaseOrderStates.SentToDistributor
+                                ? "Нова заявка"
+                                : item.Status == PurchaseOrderStates.InPreparation
+                                    ? "В подготовка"
+                                    : item.Status;
+
+                            var statusClass = item.Status == PurchaseOrderStates.SentToDistributor
+                                ? "supply-status--submitted"
+                                : item.Status == PurchaseOrderStates.InPreparation
+                                    ? "supply-status--approved"
+                                    : "supply-status--inactive";
+
+                            <tr>
+                                <td>#@item.Id</td>
+                                <td><span class="supply-status @statusClass">@statusText</span></td>
+                                <td>@item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@item.TotalAmount.ToString("0.00") €</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="OrderDetails"
+                                       asp-route-id="@item.Id"
+                                       asp-route-distributorId="@Model.DistributorId">
+                                        Отвори
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="supply-card">
+        <h3 class="supply-card__title">Изпратени / изпълнени</h3>
+        <div class="table-responsive">
+            <table class="table supply-table mb-0">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Статус</th>
+                        <th>Създадена</th>
+                        <th>Сума</th>
+                        <th class="text-end">Детайли</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!finishedOrders.Any())
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Няма приключени заявки.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        foreach (var item in finishedOrders)
+                        {
+                            var statusText = item.Status == PurchaseOrderStates.SentToAdmin
+                                ? "Изпратена към админ"
+                                : item.Status == PurchaseOrderStates.Paid
+                                    ? "Изпълнена"
+                                    : item.Status;
+
+                            var statusClass = item.Status == PurchaseOrderStates.SentToAdmin
+                                ? "supply-status--approved"
+                                : item.Status == PurchaseOrderStates.Paid
+                                    ? "supply-status--received"
+                                    : "supply-status--inactive";
+
+                            <tr>
+                                <td>#@item.Id</td>
+                                <td><span class="supply-status @statusClass">@statusText</span></td>
+                                <td>@item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                                <td>@item.TotalAmount.ToString("0.00") €</td>
+                                <td class="text-end">
+                                    <a class="btn btn-sm btn-outline-primary"
+                                       asp-action="OrderDetails"
+                                       asp-route-id="@item.Id"
+                                       asp-route-distributorId="@Model.DistributorId">
+                                        Отвори
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

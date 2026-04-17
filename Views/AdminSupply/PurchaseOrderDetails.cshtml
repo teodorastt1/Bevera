@@ -1,0 +1,134 @@
+﻿@model Bevera.Models.ViewModels.Supply.PurchaseOrderDetailsVm
+@using Bevera.Helpers
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Детайли за заявка";
+
+    var canEdit = (bool?)(ViewBag.CanEdit) ?? false;
+    var canSubmit = (bool?)(ViewBag.CanSubmit) ?? false;
+    var canPayAndLoad = (bool?)(ViewBag.CanPayAndLoad) ?? false;
+
+    var statusClass =
+        Model.Status == PurchaseOrderStates.Draft ? "supply-status--draft" :
+        Model.Status == PurchaseOrderStates.SentToDistributor ? "supply-status--submitted" :
+        Model.Status == PurchaseOrderStates.InPreparation ? "supply-status--approved" :
+        Model.Status == PurchaseOrderStates.SentToAdmin ? "supply-status--approved" :
+        Model.Status == PurchaseOrderStates.Paid ? "supply-status--received" :
+        "supply-status--inactive";
+
+    var statusText =
+        Model.Status == PurchaseOrderStates.Draft ? "Чернова" :
+        Model.Status == PurchaseOrderStates.SentToDistributor ? "Изпратена към дистрибутор" :
+        Model.Status == PurchaseOrderStates.InPreparation ? "В подготовка" :
+        Model.Status == PurchaseOrderStates.SentToAdmin ? "Чака плащане" :
+        Model.Status == PurchaseOrderStates.Paid ? "Платена и заредена" :
+        Model.Status;
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Заявка #@Model.Id</h1>
+        <p class="page-header-bevera__text">Детайли за заявката към @Model.DistributorName.</p>
+    </div>
+    <div class="page-header-bevera__actions">
+        @if (canEdit)
+        {
+            <a class="btn btn-warning bevera-btn-main" asp-action="AddPurchaseOrderItem" asp-route-purchaseOrderId="@Model.Id">+ Добави продукт</a>
+        }
+        <a class="btn btn-outline-info" asp-action="PurchaseOrderInvoice" asp-route-id="@Model.Id" target="_blank">Фактура</a>
+        <a class="btn btn-outline-secondary" asp-action="PurchaseOrders">Назад</a>
+    </div>
+</div>
+
+<div class="supply-two-col mb-4">
+    <div class="supply-card">
+        <h3 class="supply-card__title">Обща информация</h3>
+        <p class="supply-card__sub">Състояние и ключови данни за заявката.</p>
+        <div class="detail-list">
+            <div class="detail-box"><div class="detail-box__label">Дистрибутор</div><div class="detail-box__value">@Model.DistributorName</div></div>
+            <div class="detail-box"><div class="detail-box__label">Статус</div><div class="detail-box__value"><span class="supply-status @statusClass">@statusText</span></div></div>
+            <div class="detail-box"><div class="detail-box__label">Създадена</div><div class="detail-box__value">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div></div>
+            <div class="detail-box"><div class="detail-box__label">Обща сума</div><div class="detail-box__value">@Model.TotalAmount.ToString("0.00") €</div></div>
+            <div class="detail-box"><div class="detail-box__label">Изпратена</div><div class="detail-box__value">@(Model.SubmittedAt.HasValue ? Model.SubmittedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")</div></div>
+            <div class="detail-box"><div class="detail-box__label">Заредена</div><div class="detail-box__value">@(Model.ReceivedAt.HasValue ? Model.ReceivedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")</div></div>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="mt-3"><div class="detail-box__label">Бележки</div><div>@Model.Notes</div></div>
+        }
+        <div class="mt-4 d-flex gap-2 flex-wrap">
+            @if (canSubmit)
+            {
+                <form method="post" asp-action="SubmitPurchaseOrder" asp-route-id="@Model.Id">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-primary" type="submit">Изпрати към дистрибутор</button>
+                </form>
+            }
+            @if (canPayAndLoad)
+            {
+                <form method="post" asp-action="PayAndLoadPurchaseOrder" asp-route-id="@Model.Id" onsubmit="return confirm('Сигурна ли си, че искаш плащане и зареждане?');">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-success" type="submit">Плащане и зареждане</button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="supply-card">
+        <h3 class="supply-card__title">Бърз преглед</h3>
+        <p class="supply-card__sub">Админът прави чернова и я изпраща към дистрибутора. Дистрибуторът връща една крайна цена за цялата заявка. След това админът прави плащане и чак тогава артикулите се зареждат.</p>
+        <div class="detail-box mb-3"><div class="detail-box__label">Брой редове</div><div class="detail-box__value">@Model.Items.Count</div></div>
+        <div class="detail-box mb-3"><div class="detail-box__label">Обща стойност</div><div class="detail-box__value">@Model.TotalAmount.ToString("0.00") €</div></div>
+        <div class="detail-box"><div class="detail-box__label">Статус</div><div class="detail-box__value">@statusText</div></div>
+    </div>
+</div>
+
+<div class="supply-card">
+    <h3 class="supply-card__title">Продукти в заявката</h3>
+    <p class="supply-card__sub">Продуктите, които ще бъдат изпратени към дистрибутора.</p>
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead>
+                <tr>
+                    <th>Продукт</th><th>Количество</th><th>Разпределена цена/бр.</th><th>Общо</th>
+                    @if (canEdit) { <th class="text-end">Действие</th> }
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Items.Any())
+            {
+                <tr><td colspan="@(canEdit ? 5 : 4)" class="text-center text-muted py-4">Все още няма добавени продукти.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="fw-bold">@item.ProductName</td>
+                        <td>@item.DisplayQuantity</td>
+                        <td>
+                            <div>@item.CostPrice.ToString("0.00") €</div>
+                            @if (item.CostPrice <= 0)
+                            {
+                                <div class="small text-warning-emphasis">Чака крайна цена по заявката</div>
+                            }
+                        </td>
+                        <td>@item.LineTotal.ToString("0.00") €</td>
+                        @if (canEdit)
+                        {
+                            <td class="text-end">
+                                <form method="post" asp-action="DeletePurchaseOrderItem" asp-route-id="@item.Id" onsubmit="return confirm('Сигурна ли си, че искаш да изтриеш този продукт?');">
+                                    @Html.AntiForgeryToken()
+                                    <button class="btn btn-sm btn-outline-danger" type="submit">Изтрий</button>
+                                </form>
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,188 @@
+@model Bevera.Models.ViewModels.AdminProductFormViewModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Нов продукт";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Каталог</div>
+        <h1 class="page-header-bevera__title">Създаване на продукт</h1>
+        <p class="page-header-bevera__text">
+            Добави нов продукт с цени, складова информация, промоция и изображение.
+        </p>
+    </div>
+
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-outline-secondary" asp-action="Index">Назад</a>
+    </div>
+</div>
+
+<form method="post" enctype="multipart/form-data" class="product-form-shell">
+    @Html.AntiForgeryToken()
+
+    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+
+    <div class="product-form-grid">
+        <div class="product-form-main">
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Основна информация</h3>
+                    <p>Име, идентификация и принадлежност на продукта</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="Name" class="form-label"></label>
+                        <input asp-for="Name" class="form-control" />
+                        <span asp-validation-for="Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="SKU" class="form-label"></label>
+                        <input asp-for="SKU" class="form-control" />
+                        <span asp-validation-for="SKU" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="CategoryId" class="form-label"></label>
+                        <select asp-for="CategoryId" asp-items="Model.Categories" class="form-select"></select>
+                        <span asp-validation-for="CategoryId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="BrandId" class="form-label"></label>
+                        <select asp-for="BrandId" asp-items="Model.Brands" class="form-select"></select>
+                        <span asp-validation-for="BrandId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="Ml" class="form-label"></label>
+                        <input asp-for="Ml" class="form-control" />
+                        <span asp-validation-for="Ml" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="PackageType" class="form-label"></label>
+                        <input asp-for="PackageType" class="form-control" />
+                        <span asp-validation-for="PackageType" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-12">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+                        <span asp-validation-for="Description" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Цени и промоция</h3>
+                    <p>Админът задава продажната цена. Доставната цена идва по-късно от реалните доставки.</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="Price" class="form-label"></label>
+                        <input asp-for="Price" class="form-control" />
+                        <span asp-validation-for="Price" class="text-danger"></span>
+                    </div>
+
+                    <input asp-for="CostPrice" type="hidden" value="0" />
+
+                    <div class="col-md-8">
+                        <label class="form-label">Доставна цена</label>
+                        <input value="Ще се определи от дистрибутора при доставка" class="form-control" disabled />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DiscountPercent" class="form-label"></label>
+                        <input asp-for="DiscountPercent" class="form-control" />
+                        <span asp-validation-for="DiscountPercent" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label asp-for="DiscountEndsAt" class="form-label"></label>
+                        <input asp-for="DiscountEndsAt" class="form-control" type="datetime-local"
+                               value="@(Model.DiscountEndsAt.HasValue? Model.DiscountEndsAt.Value.ToString("yyyy-MM-ddTHH:mm") : "")" />
+                        <span asp-validation-for="DiscountEndsAt" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Склад и видимост</h3>
+                    <p>Админът вижда наличността, но тя се променя само от доставки и продажби.</p>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label asp-for="StockQty" class="form-label"></label>
+                        <input asp-for="StockQty" type="hidden" value="0" />
+                        <input value="0" class="form-control" readonly />
+                        <span asp-validation-for="StockQty" class="text-danger"></span>
+                        <div class="form-text">Наличността се променя само през доставки и клиентски поръчки, не ръчно от админа.</div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label asp-for="LowStockThreshold" class="form-label"></label>
+                        <input asp-for="LowStockThreshold" class="form-control" />
+                        <span asp-validation-for="LowStockThreshold" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+                        <div class="form-check form-switch product-switch">
+                            <input asp-for="IsActive" class="form-check-input" />
+                            <label asp-for="IsActive" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="product-form-side">
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Изображение</h3>
+                    <p>Качи основна снимка на продукта</p>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="ImageFile" class="form-label"></label>
+                    <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+                </div>
+
+                <div class="upload-note">
+                    Поддържай ясни и чисти изображения, за да изглежда каталогът премиум.
+                </div>
+            </div>
+
+            <div class="product-form-card">
+                <div class="product-form-card__header">
+                    <h3>Бърз преглед</h3>
+                    <p>Резюме на това, което въвеждаш</p>
+                </div>
+
+                <ul class="product-quick-summary">
+                    <li>Продажна цена: <strong>@Model.Price.ToString("0.00") €</strong></li>
+                    <li>Доставна цена: <strong>Ще се появи след доставка</strong></li>
+                    <li>Крайна цена: <strong>@Model.EffectivePrice.ToString("0.00") €</strong></li>
+                    <li>Печалба: <strong>Ще се изчислява по последна доставна цена</strong></li>
+                    <li>Наличност: <strong>@Model.StockQty</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="product-form-actions">
+        <button class="btn btn-warning bevera-btn-main" type="submit">Запази продукта</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Отказ</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

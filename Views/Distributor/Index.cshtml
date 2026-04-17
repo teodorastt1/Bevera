@@ -1,0 +1,55 @@
+@model Bevera.Models.ViewModels.Distributor.DistributorDashboardVm
+@{
+    Layout = "_DistributorLayout";
+    ViewData["Title"] = "Табло";
+}
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Дистрибутор</div>
+        <h1 class="page-header-bevera__title">Табло</h1>
+        <p class="page-header-bevera__text">Бърз преглед на новите, подготвяните и вече изпълнените заявки.</p>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="supply-card h-100">
+            <h3 class="supply-card__title">Нови заявки</h3>
+            <div class="display-6 fw-bold">@Model.NewOrdersCount</div>
+            <p class="text-muted mb-0">Чакат да започнеш подготовка.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="supply-card h-100">
+            <h3 class="supply-card__title">В подготовка</h3>
+            <div class="display-6 fw-bold">@Model.PreparingOrdersCount</div>
+            <p class="text-muted mb-0">Активни заявки, по които още работиш.</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="supply-card h-100">
+            <h3 class="supply-card__title">Изпълнени заявки</h3>
+            <div class="display-6 fw-bold">@Model.CompletedOrdersCount</div>
+            <p class="text-muted mb-0">Вече изпратени или финализирани поръчки.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12 col-lg-7">
+        <div class="supply-card h-100">
+            <h3 class="supply-card__title">Общо обработена стойност</h3>
+            <div class="display-6 fw-bold">@Model.TotalRevenue.ToString("0.00") €</div>
+            <p class="text-muted mb-0">Сума от изпратените към админ и приключените заявки.</p>
+        </div>
+    </div>
+    <div class="col-12 col-lg-5">
+        <div class="supply-card h-100">
+            <h3 class="supply-card__title">Бързи действия</h3>
+            <div class="d-grid gap-2">
+                <a class="btn btn-outline-primary" asp-action="Orders" asp-route-distributorId="@Model.DistributorId" asp-route-tab="preparing">Отвори заявки за подготовка</a>
+                <a class="btn btn-outline-success" asp-action="Orders" asp-route-distributorId="@Model.DistributorId" asp-route-tab="completed">Отвори изпълнени заявки</a>
+            </div>
+        </div>
+    </div>
+</div>

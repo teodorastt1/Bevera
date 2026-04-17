@@ -1,0 +1,218 @@
+﻿@model Bevera.Models.ViewModels.Distributor.DistributorOrderDetailsVm
+@using Bevera.Helpers
+
+@{
+    Layout = "_DistributorLayout";
+    ViewData["Title"] = "Детайли по заявка";
+
+    var statusText =
+        Model.Status == PurchaseOrderStates.Draft ? "Чернова" :
+        Model.Status == PurchaseOrderStates.SentToDistributor ? "Нова заявка" :
+        Model.Status == PurchaseOrderStates.InPreparation ? "В подготовка" :
+        Model.Status == PurchaseOrderStates.SentToAdmin ? "Изпратена към админ" :
+        Model.Status == PurchaseOrderStates.Paid ? "Платена и изпълнена" :
+        Model.Status;
+
+    var statusClass =
+        Model.Status == PurchaseOrderStates.Draft ? "supply-status--draft" :
+        Model.Status == PurchaseOrderStates.SentToDistributor ? "supply-status--submitted" :
+        Model.Status == PurchaseOrderStates.InPreparation ? "supply-status--approved" :
+        Model.Status == PurchaseOrderStates.SentToAdmin ? "supply-status--approved" :
+        Model.Status == PurchaseOrderStates.Paid ? "supply-status--received" :
+        "supply-status--inactive";
+
+    var canStartPreparation = !Model.IsPreviewMode && Model.Status == PurchaseOrderStates.SentToDistributor;
+    var canSendToAdmin = !Model.IsPreviewMode && Model.Status == PurchaseOrderStates.InPreparation && Model.Items.Any();
+    var priceReadonly = Model.Status == PurchaseOrderStates.SentToAdmin || Model.Status == PurchaseOrderStates.Paid;
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Дистрибутор</div>
+        <h1 class="page-header-bevera__title">Заявка #@Model.OrderId</h1>
+        <p class="page-header-bevera__text">
+            Тук задаваш цена за 1 брой на всеки продукт, а системата автоматично изчислява общата стойност според бройките.
+        </p>
+    </div>
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-outline-secondary" asp-action="Orders" asp-route-distributorId="@Model.DistributorId">Назад</a>
+    </div>
+</div>
+
+<div class="supply-two-col mb-4">
+    <div class="supply-card">
+        <h3 class="supply-card__title">Обобщение</h3>
+
+        <div class="detail-list">
+            <div class="detail-box">
+                <div class="detail-box__label">Дистрибутор</div>
+                <div class="detail-box__value">@Model.DistributorName</div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-box__label">Статус</div>
+                <div class="detail-box__value">
+                    <span class="supply-status @statusClass">@statusText</span>
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-box__label">Създадена</div>
+                <div class="detail-box__value">@Model.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-box__label">Изпратена</div>
+                <div class="detail-box__value">
+                    @(Model.SubmittedAt.HasValue? Model.SubmittedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-box__label">Изпълнена</div>
+                <div class="detail-box__value">
+                    @(Model.ReceivedAt.HasValue? Model.ReceivedAt.Value.ToLocalTime().ToString("dd.MM.yyyy HH:mm") : "—")
+                </div>
+            </div>
+
+            <div class="detail-box">
+                <div class="detail-box__label">Обща цена</div>
+                <div class="detail-box__value">@Model.TotalAmount.ToString("0.00") €</div>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="mt-3">
+                <div class="detail-box__label">Бележка от админ</div>
+                <div>@Model.Notes</div>
+            </div>
+        }
+
+        @if (canStartPreparation)
+        {
+            <div class="mt-4">
+                <form method="post" asp-action="StartPreparation" asp-route-id="@Model.OrderId" asp-route-distributorId="@Model.DistributorId">
+                    @Html.AntiForgeryToken()
+                    <button class="btn btn-warning" type="submit">Започни подготовка</button>
+                </form>
+            </div>
+        }
+    </div>
+
+    <div class="supply-card">
+        <h3 class="supply-card__title">Подготовка</h3>
+        <p class="supply-card__sub">
+            Въвеждаш цена за 1 брой, а системата смята автоматично общата сума според количеството в бройки.
+        </p>
+
+        <div class="detail-box mb-3">
+            <div class="detail-box__label">Брой продукти</div>
+            <div class="detail-box__value">@Model.Items.Count</div>
+        </div>
+
+        <div class="detail-box mb-3">
+            <div class="detail-box__label">Обща стойност</div>
+            <div class="detail-box__value">@Model.TotalAmount.ToString("0.00") €</div>
+        </div>
+
+        <div class="detail-box">
+            <div class="detail-box__label">Текущ етап</div>
+            <div class="detail-box__value">@statusText</div>
+        </div>
+    </div>
+</div>
+
+@if (canSendToAdmin)
+{
+    <div class="supply-card mb-4">
+        <h3 class="supply-card__title">Цени за продуктите</h3>
+
+        <form method="post" asp-action="SendOrderToAdmin" asp-route-id="@Model.OrderId" asp-route-distributorId="@Model.DistributorId">
+            @Html.AntiForgeryToken()
+
+            <div class="table-responsive">
+                <table class="table supply-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Продукт</th>
+                            <th>Количество</th>
+                            <th>Цена за 1 бр.</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Items.Count; i++)
+                        {
+                            <tr>
+                                <td class="fw-bold">
+                                    @Model.Items[i].ProductName
+                                    <input type="hidden" name="items[@i].Id" value="@Model.Items[i].Id" />
+                                </td>
+                                <td>@Model.Items[i].DisplayQuantity</td>
+                                <td style="max-width: 220px;">
+                                    <input type="text"
+                                           name="items[@i].UnitPrice"
+                                           value="@(Model.Items[i].CostPrice > 0 ? Model.Items[i].CostPrice.ToString("0.00", new System.Globalization.CultureInfo("bg-BG")) : "")"
+                                           class="form-control js-price-input"
+                                           inputmode="decimal"
+                                           placeholder="Пример: 0,30" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-3">
+                <button class="btn btn-success" type="submit">Изпрати към админ</button>
+            </div>
+        </form>
+    </div>
+}
+
+<div class="supply-card">
+    <h3 class="supply-card__title">Продукти в заявката</h3>
+
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead>
+                <tr>
+                    <th>Продукт</th>
+                    <th>Количество</th>
+                    <th>Цена за 1 бр.</th>
+                    <th>Общо</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (!Model.Items.Any())
+                {
+                    <tr>
+                        <td colspan="4" class="text-center text-muted py-4">Няма продукти.</td>
+                    </tr>
+                }
+                else
+                {
+                    foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td class="fw-bold">@item.ProductName</td>
+                            <td>@item.DisplayQuantity</td>
+                            <td>@item.CostPrice.ToString("0.00") €</td>
+                            <td>@item.LineTotal.ToString("0.00") €</td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.js-price-input').forEach(input => {
+            input.addEventListener('input', function () {
+                this.value = this.value.replace(/[^0-9.,]/g, '');
+            });
+        });
+    </script>
+}

@@ -1,0 +1,28 @@
+﻿@model Bevera.Models.ViewModels.Supply.PurchaseOrderCreateVm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Нова заявка";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Нова заявка към дистрибутор</h1>
+        <p class="page-header-bevera__text">Избери дистрибутор и създай нова чернова за зареждане.</p>
+    </div>
+    <div class="page-header-bevera__actions"><a class="btn btn-outline-secondary" asp-action="PurchaseOrders">Назад</a></div>
+</div>
+
+<div class="supply-card">
+    <form method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+        <div class="row g-3">
+            <div class="col-md-8"><label asp-for="DistributorId" class="form-label"></label><select asp-for="DistributorId" asp-items="Model.Distributors" class="form-select"></select><span asp-validation-for="DistributorId" class="text-danger"></span></div>
+            <div class="col-12"><label asp-for="Notes" class="form-label"></label><textarea asp-for="Notes" class="form-control" rows="4"></textarea><span asp-validation-for="Notes" class="text-danger"></span></div>
+        </div>
+        <div class="mt-4 d-flex gap-2 flex-wrap"><button class="btn btn-warning bevera-btn-main" type="submit">Създай чернова</button><a class="btn btn-outline-secondary" asp-action="PurchaseOrders">Отказ</a></div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

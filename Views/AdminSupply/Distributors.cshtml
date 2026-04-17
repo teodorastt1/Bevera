@@ -1,0 +1,59 @@
+﻿@model List<Bevera.Models.Supply.Distributor>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Дистрибутори";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Дистрибутори</h1>
+        <p class="page-header-bevera__text">Тук са всички профили, на които админът е сменил ролята на дистрибутор. Нов дистрибутор не се създава ръчно от админ.</p>
+    </div>
+</div>
+
+<div class="alert alert-info rounded-4 border-0 shadow-sm mb-4">
+    Потокът е: <strong>регистрация на акаунт</strong> → <strong>смяна на роля от Потребители и роли</strong> → <strong>автоматично появяване тук</strong>.
+</div>
+
+<div class="supply-card">
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead>
+                <tr>
+                    <th>Име</th>
+                    <th>Свързан акаунт</th>
+                    <th>Телефон</th>
+                    <th>Бележка</th>
+                    <th>Статус</th>
+                    <th class="text-end">Действия</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">Все още няма активирани дистрибутори.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    <tr>
+                        <td class="fw-bold">@item.Name</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Email) ? "—" : item.Email)</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Phone) ? "—" : item.Phone)</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Notes) ? "—" : item.Notes)</td>
+                        <td><span class="supply-status @(item.IsActive ? "supply-status--received" : "supply-status--inactive")">@(item.IsActive ? "Активен" : "Неактивен")</span></td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2 flex-wrap">
+                                <a class="btn btn-sm btn-outline-dark" asp-controller="Distributor" asp-action="Index" asp-route-distributorId="@item.Id">Табло</a>
+                                <a class="btn btn-sm btn-primary" asp-action="EditDistributor" asp-route-id="@item.Id">Бележка / редакция</a>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

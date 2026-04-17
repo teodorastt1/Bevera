@@ -1,0 +1,319 @@
+@model Bevera.Models.ViewModels.HomeIndexVm
+
+@{
+    ViewData["Title"] = "Начало";
+    ViewData["BodyClass"] = "home";
+}
+
+<div id="beveraCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4500">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#beveraCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Слайд 1"></button>
+        <button type="button" data-bs-target="#beveraCarousel" data-bs-slide-to="1" aria-label="Слайд 2"></button>
+        <button type="button" data-bs-target="#beveraCarousel" data-bs-slide-to="2" aria-label="Слайд 3"></button>
+        <button type="button" data-bs-target="#beveraCarousel" data-bs-slide-to="3" aria-label="Слайд 4"></button>
+    </div>
+
+    <div class="carousel-inner">
+        <div class="carousel-item active hero-first-slide">
+            <img src="~/images/logo/logo1.png" class="d-block w-100 hero-img" alt="Питиетата слайд 1">
+                <div class="carousel-caption hero-caption hero-caption-soft">
+                    <h1 class="hero-title">Питиетата</h1>
+                    <h3 class="hero-subtitle">Склад за напитки</h3>
+                    <p class="hero-text">
+                        Питиетата – мястото за безалкохолни и алкохолни напитки,
+                        бързи поръчки, добри цени и удобна доставка.
+                    </p>
+                    <a class="btn hero-btn" href="#footer">За нас и контакт</a>
+                </div>
+            </div>
+
+            <div class="carousel-item">
+                <img src="~/images/image-2.jpg" class="d-block w-100 hero-img" alt="Питиетата слайд 2">
+                    <div class="carousel-caption text-start hero-caption">
+                        <h2 class="hero-title">Промо оферти</h2>
+                        <p class="hero-text">
+                            Избрани напитки на специални цени и ограничени предложения.
+                        </p>
+                        <a class="btn hero-btn" asp-controller="Client" asp-action="Promotions">Виж промоции</a>
+                    </div>
+                </div>
+
+                <div class="carousel-item">
+                    <img src="~/images/image-3.jpg" class="d-block w-100 hero-img" alt="Питиетата слайд 3">
+                        <div class="carousel-caption text-start hero-caption">
+                            <h2 class="hero-title">Нови наличности</h2>
+                            <p class="hero-text">
+                                Води, сокове, енергийни напитки, бира и още любими предложения.
+                            </p>
+                            <a class="btn hero-btn" href="#footer">Виж още</a>
+                        </div>
+                    </div>
+
+                    <div class="carousel-item">
+                        <img src="~/images/image-1.jpg" class="d-block w-100 hero-img" alt="Питиетата слайд 4">
+                            <div class="carousel-caption text-start hero-caption">
+                                <h2 class="hero-title">Любими напитки</h2>
+                                <p class="hero-text">
+                                    Открий разнообразие от вкусове за всеки повод и настроение.
+                                </p>
+                                <a class="btn hero-btn" asp-controller="Client" asp-action="Search" asp-route-q="">Разгледай</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="carousel-control-prev custom-carousel-control" type="button" data-bs-target="#beveraCarousel" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Назад</span>
+                    </button>
+
+                    <button class="carousel-control-next custom-carousel-control" type="button" data-bs-target="#beveraCarousel" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Напред</span>
+                    </button>
+                </div>
+
+                <section class="container py-5">
+                    <div class="d-flex align-items-end justify-content-between mb-4">
+                        <div>
+                            <h2 class="section-title mb-1">Най-продавани</h2>
+                            <div class="section-subtitle">Хитовете, които се поръчват най-много.</div>
+                        </div>
+                    </div>
+
+                    @if (Model?.BestSellers == null || Model.BestSellers.Count == 0)
+                    {
+                        <div class="alert alert-light border rounded-4 shadow-sm">
+                            Още няма достатъчно поръчки, за да се покажат най-продаваните.
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="cards-rail" data-rail="hits">
+                            <button class="rail-arrow left" type="button" aria-label="Назад" onclick="railScroll('hits', -1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+
+                            <div class="rail" id="rail-hits">
+                                @foreach (var p in Model.BestSellers)
+                                {
+                                    <div class="rail-item">
+                                        <a class="product-card" asp-controller="Client" asp-action="Product" asp-route-id="@p.Id">
+                                            <div class="product-img position-relative">
+                                                <span class="hit-badge">ХИТ</span>
+
+                                                @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                                {
+                                                    <img src="@p.ImagePath" alt="@p.Name" />
+                                                }
+                                                else
+                                                {
+                                                    <img src="~/images/image-1.jpg" alt="@p.Name" />
+                                                }
+                                            </div>
+
+                                            <div class="product-body">
+                                                <div class="product-name">@p.Name</div>
+                                                <div class="product-price">@p.Price.ToString("0.00") €</div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+
+                            <button class="rail-arrow right" type="button" aria-label="Напред" onclick="railScroll('hits', 1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="rail-dots" id="dots-hits"></div>
+                    }
+                </section>
+
+                <section class="container pb-5">
+                    <div class="d-flex align-items-end justify-content-between mb-4">
+                        <div>
+                            <h2 class="section-title mb-1">Най-нови</h2>
+                            <div class="section-subtitle">Последно добавени продукти.</div>
+                        </div>
+                    </div>
+
+                    @if (Model?.Newest == null || Model.Newest.Count == 0)
+                    {
+                        <div class="alert alert-light border rounded-4 shadow-sm">Няма продукти.</div>
+                    }
+                    else
+                    {
+                        <div class="cards-rail" data-rail="new">
+                            <button class="rail-arrow left" type="button" aria-label="Назад" onclick="railScroll('new', -1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+
+                            <div class="rail" id="rail-new">
+                                @foreach (var p in Model.Newest)
+                                {
+                                    <div class="rail-item">
+                                        <a class="product-card" asp-controller="Client" asp-action="Product" asp-route-id="@p.Id">
+                                            <div class="product-img">
+                                                @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                                {
+                                                    <img src="@p.ImagePath" alt="@p.Name" />
+                                                }
+                                                else
+                                                {
+                                                    <img src="~/images/image-1.jpg" alt="@p.Name" />
+                                                }
+                                            </div>
+
+                                            <div class="product-body">
+                                                <div class="product-name">@p.Name</div>
+                                                <div class="product-price">@p.Price.ToString("0.00") €</div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+
+                            <button class="rail-arrow right" type="button" aria-label="Напред" onclick="railScroll('new', 1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="rail-dots" id="dots-new"></div>
+                    }
+                </section>
+
+                <section class="container pb-5">
+                    <div class="d-flex align-items-end justify-content-between mb-4">
+                        <div>
+                            <h2 class="section-title mb-1">Промоции</h2>
+                            <div class="section-subtitle">Активни намаления с ограничено време.</div>
+                        </div>
+
+                        <a class="section-more-link" asp-controller="Client" asp-action="Promotions">
+                            Още <i class="bi bi-arrow-right"></i>
+                        </a>
+                    </div>
+
+                    @if (Model?.Promotions == null || Model.Promotions.Count == 0)
+                    {
+                        <div class="alert alert-light border rounded-4 shadow-sm">В момента няма активни промоции.</div>
+                    }
+                    else
+                    {
+                        <div class="cards-rail" data-rail="promo">
+                            <button class="rail-arrow left" type="button" aria-label="Назад" onclick="railScroll('promo', -1)">
+                                <i class="bi bi-chevron-left"></i>
+                            </button>
+
+                            <div class="rail" id="rail-promo">
+                                @foreach (var p in Model.Promotions)
+                                {
+                                    var endDate = p.DiscountEndsAt?.ToString("yyyy-MM-ddTHH:mm:ss");
+
+                                    <div class="rail-item">
+                                        <a class="product-card promo-product-card" asp-controller="Client" asp-action="Product" asp-route-id="@p.Id">
+                                            <div class="product-img position-relative promo-image-wrap">
+                                                @if (!string.IsNullOrWhiteSpace(p.ImagePath))
+                                                {
+                                                    <img src="@p.ImagePath" alt="@p.Name" />
+                                                }
+                                                else
+                                                {
+                                                    <img src="~/images/image-1.jpg" alt="@p.Name" />
+                                                }
+
+                                                @if (p.IsDiscounted)
+                                                {
+                                                    <span class="promo-badge">-@p.DiscountPercent?.ToString("0")%</span>
+
+                                                    @if (p.DiscountEndsAt.HasValue)
+                                                    {
+                                                        <div class="promo-timer" data-discount-end="@endDate">
+                                                            До края: <span>--:--</span>
+                                                        </div>
+                                                    }
+                                                }
+                                            </div>
+
+                                            <div class="product-body">
+                                                <div class="product-name">@p.Name</div>
+
+                                                @if (p.IsDiscounted)
+                                                {
+                                                    <div class="promo-price-wrap">
+                                                        <span class="old-price">@p.Price.ToString("0.00") €</span>
+                                                        <span class="promo-price">@p.EffectivePrice.ToString("0.00") €</span>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <div class="product-price">@p.Price.ToString("0.00") €</div>
+                                                }
+                                            </div>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+
+                            <button class="rail-arrow right" type="button" aria-label="Напред" onclick="railScroll('promo', 1)">
+                                <i class="bi bi-chevron-right"></i>
+                            </button>
+                        </div>
+
+                        <div class="rail-dots" id="dots-promo"></div>
+                    }
+                </section>
+
+                <!-- styles moved to wwwroot/css/site.css -->
+
+                @section Scripts {
+                    <script>
+                        function railScroll(key, dir) {
+                            const rail = document.getElementById('rail-' + key);
+                            if (!rail) return;
+                            const card = rail.querySelector('.rail-item');
+                            const step = card ? (card.getBoundingClientRect().width + 22) * 2 : 560;
+                            rail.scrollBy({ left: dir * step, behavior: 'smooth' });
+                        }
+
+                        function setupDots(key) {
+                            const rail = document.getElementById('rail-' + key);
+                            const dots = document.getElementById('dots-' + key);
+                            if (!rail || !dots) return;
+
+                            const items = rail.querySelectorAll('.rail-item');
+                            const perPage = window.innerWidth < 768 ? 1 : window.innerWidth < 1200 ? 3 : 4;
+                            const pages = Math.max(1, Math.ceil(items.length / perPage));
+
+                            dots.innerHTML = '';
+
+                            for (let i = 0; i < pages; i++) {
+                                const d = document.createElement('div');
+                                d.className = 'rail-dot' + (i === 0 ? ' active' : '');
+                                d.addEventListener('click', () => {
+                                    const card = rail.querySelector('.rail-item');
+                                    const step = card ? (card.getBoundingClientRect().width + 22) * perPage : 900;
+                                    rail.scrollTo({ left: i * step, behavior: 'smooth' });
+                                });
+                                dots.appendChild(d);
+                            }
+
+                            rail.addEventListener('scroll', () => {
+                                const max = rail.scrollWidth - rail.clientWidth;
+                                const ratio = max <= 0 ? 0 : rail.scrollLeft / max;
+                                const idx = Math.min(pages - 1, Math.round(ratio * (pages - 1)));
+                                dots.querySelectorAll('.rail-dot').forEach((x, j) => x.classList.toggle('active', j === idx));
+                            });
+                        }
+
+                        setupDots('hits');
+                        setupDots('promo');
+                        setupDots('new');
+
+                        window.addEventListener('resize', () => {
+                            setupDots('hits');
+                            setupDots('promo');
+                            setupDots('new');
+                        });
+                    </script>
+                }

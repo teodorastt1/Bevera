@@ -1,0 +1,32 @@
+﻿@model Bevera.Models.ViewModels.Supply.PurchaseOrderItemCreateVm
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Добавяне към ценова листа";
+    var distributor = ViewBag.Distributor as Bevera.Models.Supply.Distributor;
+    var distributorId = (int)(ViewBag.DistributorId ?? 0);
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Добавяне към ценова листа</h1>
+        <p class="page-header-bevera__text">@(distributor != null ? $"Добави продукт към ценовата листа на {distributor.Name}." : "Добави продукт към ценовата листа.")</p>
+    </div>
+    <div class="page-header-bevera__actions"><a class="btn btn-outline-secondary" asp-action="DistributorProducts" asp-route-distributorId="@distributorId">Назад</a></div>
+</div>
+
+<div class="supply-card">
+    <form method="post" asp-action="AddDistributorProduct" asp-route-distributorId="@distributorId">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="CasesCount" value="1" />
+        <input type="hidden" name="UnitsPerCase" value="12" />
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+        <div class="row g-3">
+            <div class="col-md-8"><label asp-for="ProductId" class="form-label"></label><select asp-for="ProductId" asp-items="Model.Products" class="form-select"></select><span asp-validation-for="ProductId" class="text-danger"></span></div>
+            <div class="col-md-4"><label asp-for="CostPrice" class="form-label"></label><input asp-for="CostPrice" class="form-control" /><span asp-validation-for="CostPrice" class="text-danger"></span></div>
+        </div>
+        <div class="mt-4 d-flex gap-2 flex-wrap"><button class="btn btn-warning bevera-btn-main" type="submit">Добави</button><a class="btn btn-outline-secondary" asp-action="DistributorProducts" asp-route-distributorId="@distributorId">Отказ</a></div>
+    </form>
+</div>
+
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

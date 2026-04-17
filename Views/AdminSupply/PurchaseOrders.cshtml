@@ -1,0 +1,44 @@
+﻿@model List<Bevera.Models.Supply.PurchaseOrder>
+@{
+    Layout = "_AdminLayout";
+    ViewData["Title"] = "Заявки към доставчици";
+}
+
+<div class="page-header-bevera mb-4">
+    <div>
+        <div class="page-header-bevera__eyebrow">Доставки</div>
+        <h1 class="page-header-bevera__title">Заявки към доставчици</h1>
+        <p class="page-header-bevera__text">Създавай чернови, изпращай към дистрибутор и после плащай и зареждай.</p>
+    </div>
+    <div class="page-header-bevera__actions"><a class="btn btn-warning bevera-btn-main" asp-action="CreatePurchaseOrder">+ Създай чернова</a></div>
+</div>
+
+<div class="supply-card">
+    <div class="table-responsive">
+        <table class="table supply-table mb-0">
+            <thead><tr><th>#</th><th>Дистрибутор</th><th>Статус</th><th>Сума</th><th>Създадена</th><th class="text-end">Детайли</th></tr></thead>
+            <tbody>
+            @if (!Model.Any())
+            {
+                <tr><td colspan="6" class="text-center text-muted py-4">Няма създадени заявки.</td></tr>
+            }
+            else
+            {
+                foreach (var item in Model)
+                {
+                    var statusClass = item.Status == "Draft" ? "supply-status--draft" : item.Status == "SentToDistributor" ? "supply-status--submitted" : item.Status == "InPreparation" ? "supply-status--approved" : item.Status == "SentToAdmin" ? "supply-status--approved" : item.Status == "Paid" ? "supply-status--received" : "supply-status--inactive";
+                    var statusText = item.Status == "Draft" ? "Чернова" : item.Status == "SentToDistributor" ? "Изпратена към дистрибутор" : item.Status == "InPreparation" ? "В подготовка" : item.Status == "SentToAdmin" ? "Чака плащане" : item.Status == "Paid" ? "Платена и заредена" : item.Status;
+                    <tr>
+                        <td>#@item.Id</td>
+                        <td>@item.Distributor.Name</td>
+                        <td><span class="supply-status @statusClass">@statusText</span></td>
+                        <td>@item.TotalAmount.ToString("0.00") €</td>
+                        <td>@item.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="PurchaseOrderDetails" asp-route-id="@item.Id">Отвори</a></td>
+                    </tr>
+                }
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

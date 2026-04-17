@@ -1,0 +1,76 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
+    var toastScope = TempData["ToastScope"]?.ToString();
+
+    bool isAdminArea = User.IsInRole("Admin") || currentController == "AdminSupply" || currentController == "Admin" || currentController == "AdminRoles" || currentController == "AdminProducts" || currentController == "AdminCategories" || currentController == "AdminPromotions";
+    bool isDistributorArea = User.IsInRole("Distributor") || currentController == "Distributor";
+    bool isClientArea = !isAdminArea && !isDistributorArea;
+
+    bool scopeMatches =
+        string.IsNullOrWhiteSpace(toastScope) ||
+        toastScope.Equals("global", StringComparison.OrdinalIgnoreCase) ||
+        (toastScope.Equals("admin", StringComparison.OrdinalIgnoreCase) && isAdminArea) ||
+        (toastScope.Equals("distributor", StringComparison.OrdinalIgnoreCase) && isDistributorArea) ||
+        (toastScope.Equals("client", StringComparison.OrdinalIgnoreCase) && isClientArea);
+
+    var toastMessage = TempData["ToastMessage"]?.ToString();
+    var toastType = TempData["ToastType"]?.ToString();
+
+    if (string.IsNullOrWhiteSpace(toastMessage))
+    {
+        toastMessage = TempData["Success"]?.ToString();
+        if (!string.IsNullOrWhiteSpace(toastMessage)) toastType = "success";
+    }
+
+    if (string.IsNullOrWhiteSpace(toastMessage))
+    {
+        toastMessage = TempData["Error"]?.ToString();
+        if (!string.IsNullOrWhiteSpace(toastMessage)) toastType = "error";
+    }
+
+    if (string.IsNullOrWhiteSpace(toastMessage))
+    {
+        toastMessage = TempData["FlashMessage"]?.ToString() ?? TempData["Msg"]?.ToString();
+        if (!string.IsNullOrWhiteSpace(toastMessage) && string.IsNullOrWhiteSpace(toastType)) toastType = "info";
+    }
+
+    toastType ??= "info";
+
+    if (!scopeMatches)
+    {
+        toastMessage = null;
+    }
+}
+
+@if (!string.IsNullOrWhiteSpace(toastMessage))
+{
+    <div id="toast-container" class="toast-container-custom">
+        <div class="bevera-toast bevera-toast--@toastType" id="bevera-toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="bevera-toast__icon">
+                @switch (toastType)
+                {
+                    case "success": <span>✓</span>; break;
+                    case "error": <span>✕</span>; break;
+                    case "warning": <span>!</span>; break;
+                    default: <span>i</span>; break;
+                }
+            </div>
+            <div class="bevera-toast__content">
+                <div class="bevera-toast__title">
+                @{
+                    var toastTitle =
+                        toastType == "success" ? "Успешно" :
+                        toastType == "error" ? "Грешка" :
+                        toastType == "warning" ? "Внимание" :
+                        "Информация";
+                }
+                @toastTitle
+                </div>
+                <div class="bevera-toast__message">@toastMessage</div>
+            </div>
+
+            <button type="button" class="bevera-toast__close" onclick="closeBeveraToast()" aria-label="Затвори">×</button>
+            <div class="bevera-toast__progress"></div>
+        </div>
+    </div>
+}

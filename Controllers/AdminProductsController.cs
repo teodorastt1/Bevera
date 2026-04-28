@@ -22,21 +22,22 @@ namespace Bevera.Controllers
 
         // GET: /AdminProducts
         public async Task<IActionResult> Index(
-            string? q,
-            int? categoryId,
-            int? brandId,
-            string? stock,
-            string? active,
-            string? sort,
-            int? minQty,
-            int? maxQty,
-            int? minMl,
-            int? maxMl,
-            int page = 1,
-            int pageSize = 5)
+    string? q,
+    int? categoryId,
+    int? brandId,
+    string? stock,
+    string? active,
+    string? sort,
+    int? minQty,
+    int? maxQty,
+    int? minMl,
+    int? maxMl,
+    int page = 1)
         {
-            if (page < 1) page = 1;
-            if (pageSize < 5) pageSize = 5;
+            const int pageSize = 15;
+
+            if (page < 1)
+                page = 1;
 
             ViewBag.Q = q;
             ViewBag.CategoryId = categoryId;
@@ -50,7 +51,7 @@ namespace Bevera.Controllers
             ViewBag.MinMl = minMl?.ToString() ?? "";
             ViewBag.MaxMl = maxMl?.ToString() ?? "";
 
-            var categories = await _context.Categories
+            ViewBag.Categories = await _context.Categories
                 .AsNoTracking()
                 .Include(c => c.ParentCategory)
                 .Where(c => c.ParentCategoryId != null)
@@ -63,9 +64,7 @@ namespace Bevera.Controllers
                 })
                 .ToListAsync();
 
-            ViewBag.Categories = categories;
-
-            var brands = await _context.Brands
+            ViewBag.Brands = await _context.Brands
                 .AsNoTracking()
                 .OrderBy(b => b.Name)
                 .Select(b => new SelectListItem
@@ -74,8 +73,6 @@ namespace Bevera.Controllers
                     Text = b.Name
                 })
                 .ToListAsync();
-
-            ViewBag.Brands = brands;
 
             var query = _context.Products
                 .Include(p => p.Category)
@@ -86,11 +83,12 @@ namespace Bevera.Controllers
 
             if (!string.IsNullOrWhiteSpace(q))
             {
-                q = q.Trim();
+                var search = q.Trim();
+
                 query = query.Where(p =>
-                    p.Name.Contains(q) ||
-                    (p.Description != null && p.Description.Contains(q)) ||
-                    (p.SKU != null && p.SKU.Contains(q)));
+                    p.Name.Contains(search) ||
+                    (p.Description != null && p.Description.Contains(search)) ||
+                    (p.SKU != null && p.SKU.Contains(search)));
             }
 
             if (categoryId.HasValue && categoryId.Value > 0)
@@ -99,31 +97,25 @@ namespace Bevera.Controllers
             if (brandId.HasValue && brandId.Value > 0)
                 query = query.Where(p => p.BrandId == brandId.Value);
 
-            if (!string.IsNullOrWhiteSpace(stock))
+            if (stock == "low")
             {
-                if (stock == "low")
-                {
-                    query = query.Where(p =>
-                        p.StockQty > 0 &&
-                        p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 5));
-                }
-                else if (stock == "out")
-                {
-                    query = query.Where(p => p.StockQty <= 0);
-                }
-                else if (stock == "in")
-                {
-                    query = query.Where(p => p.StockQty > 0);
-                }
+                query = query.Where(p =>
+                    p.StockQty > 0 &&
+                    p.StockQty <= (p.LowStockThreshold > 0 ? p.LowStockThreshold : 5));
+            }
+            else if (stock == "out")
+            {
+                query = query.Where(p => p.StockQty <= 0);
+            }
+            else if (stock == "in")
+            {
+                query = query.Where(p => p.StockQty > 0);
             }
 
-            if (!string.IsNullOrWhiteSpace(active))
-            {
-                if (active == "yes")
-                    query = query.Where(p => p.IsActive);
-                else if (active == "no")
-                    query = query.Where(p => !p.IsActive);
-            }
+            if (active == "yes")
+                query = query.Where(p => p.IsActive);
+            else if (active == "no")
+                query = query.Where(p => !p.IsActive);
 
             if (minQty.HasValue)
                 query = query.Where(p => p.StockQty >= minQty.Value);
@@ -158,6 +150,11 @@ namespace Bevera.Controllers
             };
 
             var total = await query.CountAsync();
+
+            var totalPages = pageSize <= 0 ? 1 : (int)Math.Ceiling(total / (double)pageSize);
+
+            if (totalPages > 0 && page > totalPages)
+                page = totalPages;
 
             var items = await query
                 .Skip((page - 1) * pageSize)
@@ -195,7 +192,6 @@ namespace Bevera.Controllers
 
             return View(model);
         }
-
         // GET: /AdminProducts/Create
         public async Task<IActionResult> Create()
         {
@@ -299,7 +295,7 @@ namespace Bevera.Controllers
                 StockQty = product.StockQty,
                 LowStockThreshold = product.LowStockThreshold,
 
-                Ml = product.Ml,
+                Ml = product.Ml ?? 0,
                 PackageType = product.PackageType,
 
                 DiscountPercent = product.DiscountPercent,
@@ -477,9 +473,9 @@ namespace Bevera.Controllers
                 ModelState.AddModelError(nameof(vm.LowStockThreshold), "Прагът за ниска наличност не може да е отрицателен.");
             }
 
-            if (vm.Ml.HasValue && vm.Ml.Value < 0)
+            if (vm.Ml <= 0)
             {
-                ModelState.AddModelError(nameof(vm.Ml), "Милилитрите не могат да бъдат отрицателни.");
+                ModelState.AddModelError(nameof(vm.Ml), "Моля, изберете милилитри.");
             }
 
             if (vm.DiscountPercent.HasValue)

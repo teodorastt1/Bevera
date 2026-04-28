@@ -44,9 +44,9 @@ namespace Bevera.Models.ViewModels
         [Display(Name = "Праг за ниска наличност")]
         public int LowStockThreshold { get; set; } = 5;
 
-        [Range(0, 100000, ErrorMessage = "Милилитрите трябва да са между 0 и 100000.")]
-        [Display(Name = "Милилитри")]
-        public int? Ml { get; set; }
+        [Required(ErrorMessage = "Моля, изберете милилитри.")]
+        [Range(1, 10000, ErrorMessage = "Моля, изберете валидна стойност.")]
+        public int Ml { get; set; }
 
         [StringLength(40, ErrorMessage = "Типът опаковка не може да е по-дълъг от 40 символа.")]
         [Display(Name = "Тип опаковка")]

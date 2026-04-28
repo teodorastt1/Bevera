@@ -2,46 +2,58 @@
 
 @if (Model.TotalPages > 1)
 {
-    <nav class="mt-3">
-        <ul class="pagination justify-content-center">
+    <nav class="mt-4" aria-label="Навигация по страници">
+        <ul class="pagination justify-content-center flex-wrap gap-1">
+
             <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
                 <a class="page-link"
-                       asp-action="@Model.Action"
                        asp-controller="@Model.Controller"
+                       asp-action="@Model.Action"
                        asp-all-route-data="@(BuildRoutes(Model, Model.Page - 1))">
                     Предишна
                 </a>
             </li>
 
-            @for (int p = 1; p <= Model.TotalPages; p++)
+            @for (int i = 1; i <= Model.TotalPages; i++)
             {
-                <li class="page-item @(p == Model.Page ? "active" : "")">
+                <li class="page-item @(i == Model.Page ? "active" : "")">
                     <a class="page-link"
-                           asp-action="@Model.Action"
                            asp-controller="@Model.Controller"
-                           asp-all-route-data="@(BuildRoutes(Model, p))">
-                        @p
+                           asp-action="@Model.Action"
+                           asp-all-route-data="@(BuildRoutes(Model, i))">
+                        @i
                     </a>
                 </li>
             }
 
             <li class="page-item @(Model.Page >= Model.TotalPages ? "disabled" : "")">
                 <a class="page-link"
-                       asp-action="@Model.Action"
                        asp-controller="@Model.Controller"
+                       asp-action="@Model.Action"
                        asp-all-route-data="@(BuildRoutes(Model, Model.Page + 1))">
                     Следваща
                 </a>
             </li>
+
         </ul>
     </nav>
 }
 
 @functions {
-    private Dictionary<string, string?> BuildRoutes(Bevera.Models.ViewModels.PaginationViewModel m, int page)
+    private Dictionary<string, string?> BuildRoutes(Bevera.Models.ViewModels.PaginationViewModel model, int page)
     {
-        var dict = new Dictionary<string, string?>(m.RouteValues);
-        dict["page"] = page.ToString();
-        return dict;
+        var routes = new Dictionary<string, string?>();
+
+        foreach (var item in model.RouteValues)
+        {
+            if (!string.IsNullOrWhiteSpace(item.Value))
+            {
+                routes[item.Key] = item.Value;
+            }
+        }
+
+        routes["page"] = page.ToString();
+
+        return routes;
     }
 }

@@ -831,4 +831,8 @@ body {
         text-align: left;
         margin-bottom: 12px;
     }
+    .bevera-full-select {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
 }

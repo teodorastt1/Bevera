@@ -253,6 +253,28 @@
                                             && p.DiscountPercent.Value > 0
                                             && (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= DateTime.UtcNow);
 
+                            int realMl = 0;
+
+                            if (p.Ml.HasValue && p.Ml.Value > 0)
+                            {
+                                realMl = p.Ml.Value;
+                            }
+                            else if (p.VolumeLiters > 0)
+                            {
+                                realMl = (int)decimal.Round(p.VolumeLiters * 1000m, 0);
+                            }
+
+                            string mlText = "—";
+
+                            if (realMl >= 1000)
+                            {
+                                mlText = (realMl / 1000.0).ToString("0.#").Replace(".", ",") + " л";
+                            }
+                            else if (realMl > 0)
+                            {
+                                mlText = realMl + " мл";
+                            }
+
                             <div class="col-12 col-sm-6 col-lg-4">
                                 <div class="category-product-card">
                                     <a class="category-card-link"
@@ -283,18 +305,7 @@
                                             }
 
                                             <div class="category-product-meta">
-                                                @if (p.Ml.HasValue && p.Ml.Value > 0)
-                                                {
-                                                    <text>@p.Ml мл</text>
-                                                }
-                                                else if (p.VolumeLiters > 0)
-                                                {
-                                                    <text>@(decimal.Round(p.VolumeLiters * 1000m, 0)) мл</text>
-                                                }
-                                                else
-                                                {
-                                                    <text>—</text>
-                                                }
+                                                <text>@mlText</text>
                                                 @if (!string.IsNullOrWhiteSpace(p.PackageType))
                                                 {
                                                     <text> • @p.PackageType</text>

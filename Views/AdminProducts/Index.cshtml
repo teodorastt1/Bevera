@@ -1,7 +1,7 @@
 @using Bevera.Models.ViewModels
-@using Bevera.Models.ViewModels
 @using Microsoft.AspNetCore.Mvc.Rendering
 @model Bevera.Models.ViewModels.PagedResult<Bevera.Models.ViewModels.AdminProductRowViewModel>
+
 @{
     Layout = "_AdminLayout";
     ViewData["Title"] = "Продукти";
@@ -21,8 +21,6 @@
     string maxQty = ViewBag.MaxQty as string ?? "";
     string minMl = ViewBag.MinMl as string ?? "";
     string maxMl = ViewBag.MaxMl as string ?? "";
-
-    string pageSize = (ViewBag.PageSize ?? Model.PageSize).ToString();
 }
 
 <div class="page-header-bevera mb-4">
@@ -146,15 +144,6 @@
             <input type="number" min="0" name="maxMl" value="@maxMl" class="form-control" placeholder="2000" />
         </div>
 
-        <div class="col-lg-2">
-            <label class="form-label">На страница</label>
-            <select class="form-select" name="pageSize">
-                <option value="5" selected="@(pageSize == "5" ? "selected" : null)">5</option>
-                <option value="10" selected="@(pageSize == "10" ? "selected" : null)">10</option>
-                <option value="20" selected="@(pageSize == "20" ? "selected" : null)">20</option>
-            </select>
-        </div>
-
         <div class="col-lg-4 d-flex gap-2">
             <button class="btn btn-primary w-100 bevera-btn-soft" type="submit">Филтрирай</button>
             <a class="btn btn-outline-secondary w-100" asp-action="Index">Изчисти</a>
@@ -221,7 +210,14 @@
 
                                     @if (p.Ml.HasValue)
                                     {
-                                        <span class="product-meta-chip">@p.Ml мл</span>
+                                        if (p.Ml.Value >= 1000)
+                                        {
+                                            <span class="product-meta-chip">@((p.Ml.Value / 1000.0).ToString("0.#")) л</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="product-meta-chip">@p.Ml.Value мл</span>
+                                        }
                                     }
 
                                     @if (!string.IsNullOrWhiteSpace(p.PackageType))
@@ -325,8 +321,7 @@
             ["minQty"] = minQty,
             ["maxQty"] = maxQty,
             ["minMl"] = minMl,
-            ["maxMl"] = maxMl,
-            ["pageSize"] = pageSize
+            ["maxMl"] = maxMl
         }
     };
 }

@@ -6,12 +6,37 @@
     var available = Model.StockQty;
     var isOutOfStock = available <= 0;
     var isLowStock = available > 0 && available <= Model.LowStockThreshold;
-    var isInStock = available > Model.LowStockThreshold;
+
+    var hasPromotion = Model.DiscountPercent.HasValue
+        && Model.DiscountPercent.Value > 0
+        && (!Model.DiscountEndsAt.HasValue || Model.DiscountEndsAt.Value >= DateTime.UtcNow);
 
     var imageSrc =
         Model.Images?.FirstOrDefault(i => i.IsMain)?.ImagePath
         ?? Model.Images?.FirstOrDefault()?.ImagePath
         ?? Url.Content("~/images/image-1.jpg");
+
+    int ml = 0;
+
+    if (Model.Ml.HasValue && Model.Ml.Value > 0)
+    {
+        ml = Model.Ml.Value;
+    }
+    else if (Model.VolumeLiters > 0)
+    {
+        ml = (int)decimal.Round(Model.VolumeLiters * 1000m, 0);
+    }
+
+    string mlText = "";
+
+    if (ml >= 1000)
+    {
+        mlText = (ml / 1000.0).ToString("0.#").Replace(".", ",") + " л";
+    }
+    else if (ml > 0)
+    {
+        mlText = ml + " мл";
+    }
 }
 
 <div class="product-page-wrap py-4 py-lg-5">
@@ -22,10 +47,9 @@
                     <div class="product-image-panel @(isOutOfStock ? "product-image-panel-out" : "")">
                         <img src="@imageSrc" alt="@Model.Name" class="product-main-image" />
 
-                        @if (Model.DiscountPercent.HasValue && Model.DiscountPercent.Value > 0 &&
-                                                     (!Model.DiscountEndsAt.HasValue || Model.DiscountEndsAt.Value >= DateTime.UtcNow))
+                        @if (hasPromotion)
                         {
-                            <span class="product-discount-badge">-@Model.DiscountPercent.Value.ToString("0")%</span>
+                            <span class="product-discount-badge">-@Model.DiscountPercent!.Value.ToString("0")%</span>
                         }
 
                         @if (isLowStock)
@@ -59,13 +83,9 @@
                         <h1 class="product-title">@Model.Name</h1>
 
                         <div class="product-sub-meta">
-                            @if (Model.Ml.HasValue && Model.Ml.Value > 0)
+                            @if (!string.IsNullOrWhiteSpace(mlText))
                             {
-                                <span>@Model.Ml мл</span>
-                            }
-                            else if (Model.VolumeLiters > 0)
-                            {
-                                <span>@(decimal.Round(Model.VolumeLiters * 1000m, 0)) мл</span>
+                                <span>@mlText</span>
                             }
 
                             @if (!string.IsNullOrWhiteSpace(Model.PackageType))
@@ -75,8 +95,7 @@
                         </div>
 
                         <div class="product-price-block">
-                            @if (Model.DiscountPercent.HasValue && Model.DiscountPercent.Value > 0 &&
-                                                             (!Model.DiscountEndsAt.HasValue || Model.DiscountEndsAt.Value >= DateTime.UtcNow))
+                            @if (hasPromotion)
                             {
                                 <span class="old-product-price">@Model.Price.ToString("0.00") €</span>
                                 <span class="current-product-price">@Model.EffectivePrice.ToString("0.00") €</span>
@@ -131,6 +150,19 @@
                                         <i class="bi bi-heart me-1"></i> Добави в любими
                                     </button>
                                 </form>
+
+                                <form asp-controller="Cart" asp-action="Add" method="post" class="m-0">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="productId" value="@Model.Id" />
+                                    <input type="hidden" name="qty" value="1" />
+                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+
+                                    <button type="submit"
+                                            class="btn buy-action-btn @(isOutOfStock ? "buy-action-btn-disabled" : "")"
+                                            disabled="@isOutOfStock">
+                                        <i class="bi bi-cart-plus me-1"></i> Купи
+                                    </button>
+                                </form>
                             }
                             else
                             {
@@ -140,25 +172,7 @@
                                        asp-route-returnUrl="@Context.Request.Path">
                                     <i class="bi bi-heart me-1"></i> Добави в любими
                                 </a>
-                            }
 
-                            @if (User.Identity?.IsAuthenticated == true)
-                            {
-                                <form asp-controller="Cart" asp-action="Add" method="post" class="m-0">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="productId" value="@Model.Id" />
-                                    <input type="hidden" name="qty" value="1" />
-                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-
-                                    <button type="submit"
-                                            class="btn buy-action-btn @(isOutOfStock ? "buy-action-btn-disabled" : "")"
-                                        @(isOutOfStock ? "disabled" : null)>
-                                        <i class="bi bi-cart-plus me-1"></i> Купи
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
                                 @if (isOutOfStock)
                                 {
                                     <a class="btn buy-action-btn buy-action-btn-disabled disabled">
@@ -219,17 +233,15 @@
                                     </div>
 
                                     <div class="mt-2">
-                                        @{
-                                            for (int i = 1; i <= 5; i++)
+                                        @for (int i = 1; i <= 5; i++)
+                                        {
+                                            if (i <= r.Rating)
                                             {
-                                                if (i <= r.Rating)
-                                                {
-                                                    <i class="bi bi-star-fill text-warning"></i>
-                                                }
-                                                else
-                                                {
-                                                    <i class="bi bi-star text-warning"></i>
-                                                }
+                                                <i class="bi bi-star-fill text-warning"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="bi bi-star text-warning"></i>
                                             }
                                         }
                                     </div>

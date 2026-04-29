@@ -26,7 +26,7 @@ namespace Bevera.Controllers
             _invoiceService = invoiceService;
         }
 
-        // /Client/Category/8  (+ filters)
+        // /Client/Category/8  (+ filters + paging)
         [HttpGet]
         public async Task<IActionResult> Category(
             int id,
@@ -39,14 +39,17 @@ namespace Bevera.Controllers
             int? minMl = null,
             int? maxMl = null,
             string? packageType = null,
-            string? sort = null)
+            string? sort = null,
+            int page = 1)
         {
             var category = await _db.Categories
                 .FirstOrDefaultAsync(c => c.Id == id && c.IsActive);
 
-            if (category == null) return NotFound();
+            if (category == null)
+            {
+                return NotFound();
+            }
 
-            // Ако е parent категория -> показваме подкатегориите
             var subcats = await _db.Categories
                 .Where(c => c.IsActive && c.ParentCategoryId == id)
                 .OrderBy(c => c.Name)
@@ -65,14 +68,12 @@ namespace Bevera.Controllers
                 .Include(p => p.Brand)
                 .AsQueryable();
 
-            // Search
             if (!string.IsNullOrWhiteSpace(q))
             {
                 q = q.Trim();
                 productsQuery = productsQuery.Where(p => p.Name.Contains(q));
             }
 
-            // Price range (по EffectivePrice, не по Price)
             if (minPrice.HasValue)
             {
                 productsQuery = productsQuery.Where(p => p.EffectivePrice >= minPrice.Value);
@@ -83,13 +84,11 @@ namespace Bevera.Controllers
                 productsQuery = productsQuery.Where(p => p.EffectivePrice <= maxPrice.Value);
             }
 
-            // Only available
             if (onlyAvailable)
             {
                 productsQuery = productsQuery.Where(p => p.StockQty > 0);
             }
 
-            // Only promotions
             if (onlyPromo)
             {
                 productsQuery = productsQuery.Where(p =>
@@ -98,64 +97,101 @@ namespace Bevera.Controllers
                     (!p.DiscountEndsAt.HasValue || p.DiscountEndsAt.Value >= DateTime.UtcNow));
             }
 
-            // Brand
             if (brandId.HasValue && brandId.Value > 0)
             {
                 productsQuery = productsQuery.Where(p => p.BrandId == brandId.Value);
             }
 
-            // Min ml
             if (minMl.HasValue)
             {
                 var minLiters = minMl.Value / 1000m;
+
                 productsQuery = productsQuery.Where(p =>
                     (p.Ml.HasValue && p.Ml.Value >= minMl.Value) ||
                     (!p.Ml.HasValue && p.VolumeLiters >= minLiters));
             }
 
-            // Max ml
             if (maxMl.HasValue)
             {
                 var maxLiters = maxMl.Value / 1000m;
+
                 productsQuery = productsQuery.Where(p =>
                     (p.Ml.HasValue && p.Ml.Value <= maxMl.Value) ||
                     (!p.Ml.HasValue && p.VolumeLiters <= maxLiters));
             }
 
-            // Package type
             if (!string.IsNullOrWhiteSpace(packageType))
             {
-                productsQuery = productsQuery.Where(p => p.PackageType != null && p.PackageType == packageType);
+                productsQuery = productsQuery.Where(p =>
+                    p.PackageType != null && p.PackageType == packageType);
             }
 
-            // Sorting
             productsQuery = sort switch
             {
                 "name_desc" => productsQuery.OrderByDescending(p => p.Name),
-                "price_asc" => productsQuery.OrderBy(p => p.EffectivePrice).ThenBy(p => p.Name),
-                "price_desc" => productsQuery.OrderByDescending(p => p.EffectivePrice).ThenBy(p => p.Name),
+
+                "price_asc" => productsQuery
+                    .OrderBy(p => p.EffectivePrice)
+                    .ThenBy(p => p.Name),
+
+                "price_desc" => productsQuery
+                    .OrderByDescending(p => p.EffectivePrice)
+                    .ThenBy(p => p.Name),
+
                 "promo_desc" => productsQuery
                     .OrderByDescending(p => p.DiscountPercent.HasValue ? p.DiscountPercent.Value : 0)
                     .ThenBy(p => p.Name),
-                "ml_asc" => productsQuery.OrderBy(p => p.Ml ?? (int?)(p.VolumeLiters * 1000m)).ThenBy(p => p.Name),
-                "ml_desc" => productsQuery.OrderByDescending(p => p.Ml ?? (int?)(p.VolumeLiters * 1000m)).ThenBy(p => p.Name),
+
+                "ml_asc" => productsQuery
+                    .OrderBy(p => p.Ml ?? (int?)(p.VolumeLiters * 1000m))
+                    .ThenBy(p => p.Name),
+
+                "ml_desc" => productsQuery
+                    .OrderByDescending(p => p.Ml ?? (int?)(p.VolumeLiters * 1000m))
+                    .ThenBy(p => p.Name),
+
                 _ => productsQuery.OrderBy(p => p.Name)
             };
 
-            // Dropdown/filter data
             var brands = await _db.Brands
                 .Where(b => b.IsActive && b.Products.Any(p => p.CategoryId == id && p.IsActive))
                 .OrderBy(b => b.Name)
                 .ToListAsync();
 
             var packageTypes = await _db.Products
-                .Where(p => p.CategoryId == id && p.IsActive && p.PackageType != null && p.PackageType != "")
+                .Where(p => p.CategoryId == id &&
+                            p.IsActive &&
+                            p.PackageType != null &&
+                            p.PackageType != "")
                 .Select(p => p.PackageType!)
                 .Distinct()
                 .OrderBy(x => x)
                 .ToListAsync();
 
-            var products = await productsQuery.ToListAsync();
+            const int pageSize = 9;
+
+            var totalItems = await productsQuery.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+
+            if (totalPages < 1)
+            {
+                totalPages = 1;
+            }
+
+            if (page < 1)
+            {
+                page = 1;
+            }
+
+            if (page > totalPages)
+            {
+                page = totalPages;
+            }
+
+            var products = await productsQuery
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
 
             ViewBag.CategoryName = category.Name;
             ViewBag.Q = q;
@@ -170,6 +206,11 @@ namespace Bevera.Controllers
             ViewBag.Sort = sort ?? "";
             ViewBag.Brands = brands;
             ViewBag.PackageTypes = packageTypes;
+
+            ViewBag.Page = page;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalItems = totalItems;
+            ViewBag.PageSize = pageSize;
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var favIds = new List<int>();

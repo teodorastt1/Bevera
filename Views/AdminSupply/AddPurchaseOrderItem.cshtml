@@ -9,13 +9,16 @@
     <div>
         <div class="page-header-bevera__eyebrow">Доставки</div>
         <h1 class="page-header-bevera__title">Добавяне на продукти</h1>
-        <p class="page-header-bevera__text">Избери няколко продукта наведнъж, задай кашони и ги добави към черновата за @distributorName.</p>
+        <p class="page-header-bevera__text">
+            Избери няколко продукта наведнъж, задай кашони и ги добави към черновата за @distributorName.
+        </p>
     </div>
-    <div class="page-header-bevera__actions"><a class="btn btn-outline-secondary" asp-action="PurchaseOrderDetails" asp-route-id="@Model.PurchaseOrderId">Назад</a></div>
+    <div class="page-header-bevera__actions">
+        <a class="btn btn-outline-secondary" asp-action="PurchaseOrderDetails" asp-route-id="@Model.PurchaseOrderId">Назад</a>
+    </div>
 </div>
-
 <div class="supply-card">
-    <form method="post">
+    <form asp-action="AddPurchaseOrderItem" asp-controller="AdminSupply" method="post">
         @Html.AntiForgeryToken()
         <input asp-for="PurchaseOrderId" type="hidden" />
         <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
@@ -24,7 +27,9 @@
             <table class="table supply-table align-middle">
                 <thead>
                     <tr>
-                        <th style="width:70px;">Избор</th>
+                        <th style="width:70px;">
+                            <input type="checkbox" id="selectAll" class="form-check-input" />
+                        </th>
                         <th>Продукт</th>
                         <th style="width:140px;">Кашони</th>
                         <th style="width:160px;">Бройки в кашон</th>
@@ -38,7 +43,7 @@
                         var row = Model.Items[i];
                         <tr>
                             <td>
-                                <input asp-for="Items[i].IsSelected" class="form-check-input" />
+                                <input asp-for="Items[i].IsSelected" class="form-check-input item-checkbox" />
                                 <input asp-for="Items[i].ProductId" type="hidden" />
                                 <input asp-for="Items[i].ProductName" type="hidden" />
                                 <input asp-for="Items[i].CostPrice" type="hidden" />
@@ -49,7 +54,9 @@
                                 <div class="fw-bold">@row.ProductName</div>
                                 @if (!row.IsAvailable)
                                 {
-                                    <div class="small text-danger">Този продукт е маркиран като неналичен при дистрибутора.</div>
+                                    <div class="small text-danger">
+                                        Този продукт е маркиран като неналичен при дистрибутора.
+                                    </div>
                                 }
                             </td>
                             <td>
@@ -71,16 +78,38 @@
         </div>
 
         <div class="mt-4 d-flex gap-2 flex-wrap">
-            <button class="btn btn-warning bevera-btn-main" type="submit">Добави избраните продукти</button>
-            <a class="btn btn-outline-secondary" asp-action="PurchaseOrderDetails" asp-route-id="@Model.PurchaseOrderId">Отказ</a>
+            <button class="btn btn-warning bevera-btn-main" type="submit">
+                Добави избраните продукти
+            </button>
+            <a class="btn btn-outline-secondary" asp-action="PurchaseOrderDetails" asp-route-id="@Model.PurchaseOrderId">
+                Отказ
+            </a>
         </div>
     </form>
 </div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+
+            // ===== SELECT ALL =====
+            const selectAll = document.getElementById("selectAll");
+            const checkboxes = document.querySelectorAll(".item-checkbox");
+
+            selectAll.addEventListener("change", function () {
+                checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            });
+
+            checkboxes.forEach(cb => {
+                cb.addEventListener("change", function () {
+                    const allChecked = Array.from(checkboxes).every(c => c.checked);
+                    selectAll.checked = allChecked;
+                });
+            });
+
+            // ===== CALCULATIONS =====
             document.querySelectorAll("tbody tr").forEach(row => {
                 const casesInput = row.querySelector(".js-cases");
                 const unitsInput = row.querySelector(".js-units");

@@ -3,6 +3,10 @@
 @{
     ViewData["Title"] = ViewBag.CategoryName ?? "Категория";
 
+    var routeId = ViewContext.RouteData.Values["id"];
+    var request = ViewContext.HttpContext.Request;
+    var returnUrl = $"{request.Path}{request.QueryString}";
+
     string q = ViewBag.Q as string ?? "";
     decimal? minPrice = ViewBag.MinPrice as decimal?;
     decimal? maxPrice = ViewBag.MaxPrice as decimal?;
@@ -15,19 +19,26 @@
     string packageType = ViewBag.PackageType as string ?? "";
     string sort = ViewBag.Sort as string ?? "";
 
+    int page = ViewBag.Page ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalItems = ViewBag.TotalItems ?? 0;
+
     var brands = ViewBag.Brands as List<Bevera.Models.Catalog.Brand> ?? new();
     var packageTypes = ViewBag.PackageTypes as List<string> ?? new();
-
     var favIds = ViewBag.FavIds as List<int> ?? new List<int>();
-    var returnUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
 }
 
 <div class="category-page-wrap py-4 py-lg-5">
     <div class="container-fluid px-3 px-lg-4">
+
         <div class="category-hero mb-4 mb-lg-5">
-            <div>
-                <h1 class="category-page-title mb-2">@ViewData["Title"]</h1>
-                <div class="category-page-subtitle">Разгледай продуктите от категория „@ViewData["Title"]“.</div>
+            <h1 class="category-page-title mb-2">@ViewData["Title"]</h1>
+            <div class="category-page-subtitle">
+                Разгледай продуктите от категория „@ViewData["Title"]“.
+                @if (totalItems > 0)
+                {
+                    <span> Намерени продукти: @totalItems</span>
+                }
             </div>
         </div>
 
@@ -38,9 +49,9 @@
                         <div class="filter-title">Филтри</div>
 
                         <a class="btn clear-filter-btn"
-                               asp-controller="Client"
-                               asp-action="Category"
-                               asp-route-id="@Context.Request.RouteValues["id"]">
+                           asp-controller="Client"
+                           asp-action="Category"
+                           asp-route-id="@routeId">
                             Изчисти
                         </a>
                     </div>
@@ -48,7 +59,9 @@
                     <form method="get"
                           asp-controller="Client"
                           asp-action="Category"
-                          asp-route-id="@Context.Request.RouteValues["id"]">
+                          asp-route-id="@routeId">
+
+                        <input type="hidden" name="page" value="1" />
 
                         <div class="mb-3">
                             <label class="form-label filter-label">Търси</label>
@@ -59,22 +72,12 @@
                             <label class="form-label filter-label">Цена (€)</label>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input class="form-control filter-input"
-                                           type="number"
-                                           step="0.01"
-                                           min="0"
-                                           name="minPrice"
-                                           value="@(minPrice?.ToString() ?? "")"
-                                           placeholder="От" />
+                                    <input class="form-control filter-input" type="number" step="0.01" min="0"
+                                           name="minPrice" value="@(minPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" placeholder="От" />
                                 </div>
                                 <div class="col-6">
-                                    <input class="form-control filter-input"
-                                           type="number"
-                                           step="0.01"
-                                           min="0"
-                                           name="maxPrice"
-                                           value="@(maxPrice?.ToString() ?? "")"
-                                           placeholder="До" />
+                                    <input class="form-control filter-input" type="number" step="0.01" min="0"
+                                           name="maxPrice" value="@(maxPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "")" placeholder="До" />
                                 </div>
                             </div>
                         </div>
@@ -85,7 +88,7 @@
                                 <option value="">Всички</option>
                                 @foreach (var brand in brands)
                                 {
-                                    @if (brandId == brand.Id)
+                                    if (brandId == brand.Id)
                                     {
                                         <option value="@brand.Id" selected>@brand.Name</option>
                                     }
@@ -101,20 +104,10 @@
                             <label class="form-label filter-label">Милилитри</label>
                             <div class="row g-2">
                                 <div class="col-6">
-                                    <input class="form-control filter-input"
-                                           type="number"
-                                           min="0"
-                                           name="minMl"
-                                           value="@(minMl?.ToString() ?? "")"
-                                           placeholder="От мл" />
+                                    <input class="form-control filter-input" type="number" min="0" name="minMl" value="@(minMl?.ToString() ?? "")" placeholder="От мл" />
                                 </div>
                                 <div class="col-6">
-                                    <input class="form-control filter-input"
-                                           type="number"
-                                           min="0"
-                                           name="maxMl"
-                                           value="@(maxMl?.ToString() ?? "")"
-                                           placeholder="До мл" />
+                                    <input class="form-control filter-input" type="number" min="0" name="maxMl" value="@(maxMl?.ToString() ?? "")" placeholder="До мл" />
                                 </div>
                             </div>
                         </div>
@@ -125,7 +118,7 @@
                                 <option value="">Всички</option>
                                 @foreach (var type in packageTypes)
                                 {
-                                    @if (packageType == type)
+                                    if (packageType == type)
                                     {
                                         <option value="@type" selected>@type</option>
                                     }
@@ -140,92 +133,27 @@
                         <div class="mb-3">
                             <label class="form-label filter-label">Сортиране</label>
                             <select class="form-select filter-input" name="sort">
-                                @if (sort == "")
-                                {
-                                    <option value="" selected>Име (А-Я)</option>
-                                }
-                                else
-                                {
-                                    <option value="">Име (А-Я)</option>
-                                }
-
-                                @if (sort == "name_desc")
-                                {
-                                    <option value="name_desc" selected>Име (Я-А)</option>
-                                }
-                                else
-                                {
-                                    <option value="name_desc">Име (Я-А)</option>
-                                }
-
-                                @if (sort == "price_asc")
-                                {
-                                    <option value="price_asc" selected>Цена ↑</option>
-                                }
-                                else
-                                {
-                                    <option value="price_asc">Цена ↑</option>
-                                }
-
-                                @if (sort == "price_desc")
-                                {
-                                    <option value="price_desc" selected>Цена ↓</option>
-                                }
-                                else
-                                {
-                                    <option value="price_desc">Цена ↓</option>
-                                }
-
-                                @if (sort == "promo_desc")
-                                {
-                                    <option value="promo_desc" selected>Най-голяма промоция</option>
-                                }
-                                else
-                                {
-                                    <option value="promo_desc">Най-голяма промоция</option>
-                                }
-
-                                @if (sort == "ml_asc")
-                                {
-                                    <option value="ml_asc" selected>Милилитри ↑</option>
-                                }
-                                else
-                                {
-                                    <option value="ml_asc">Милилитри ↑</option>
-                                }
-
-                                @if (sort == "ml_desc")
-                                {
-                                    <option value="ml_desc" selected>Милилитри ↓</option>
-                                }
-                                else
-                                {
-                                    <option value="ml_desc">Милилитри ↓</option>
-                                }
+                                <option value="" selected="@(sort == "")">Име (А-Я)</option>
+                                <option value="name_desc" selected="@(sort == "name_desc")">Име (Я-А)</option>
+                                <option value="price_asc" selected="@(sort == "price_asc")">Цена ↑</option>
+                                <option value="price_desc" selected="@(sort == "price_desc")">Цена ↓</option>
+                                <option value="promo_desc" selected="@(sort == "promo_desc")">Най-голяма промоция</option>
+                                <option value="ml_asc" selected="@(sort == "ml_asc")">Милилитри ↑</option>
+                                <option value="ml_desc" selected="@(sort == "ml_desc")">Милилитри ↓</option>
                             </select>
                         </div>
 
                         <div class="form-check promo-check mb-2">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="onlyAvailable"
-                                   value="true"
-                            @(onlyAvailable ? "checked" : "") />
+                            <input class="form-check-input" type="checkbox" name="onlyAvailable" value="true" checked="@onlyAvailable" />
                             <label class="form-check-label">Само налични</label>
                         </div>
 
                         <div class="form-check promo-check mb-3">
-                            <input class="form-check-input"
-                                   type="checkbox"
-                                   name="onlyPromo"
-                                   value="true"
-                            @(onlyPromo ? "checked" : "") />
+                            <input class="form-check-input" type="checkbox" name="onlyPromo" value="true" checked="@onlyPromo" />
                             <label class="form-check-label">Само промоции</label>
                         </div>
 
-                        <button class="btn apply-filter-btn w-100" type="submit">
-                            Приложи
-                        </button>
+                        <button class="btn apply-filter-btn w-100" type="submit">Приложи</button>
                     </form>
                 </div>
             </aside>
@@ -233,9 +161,7 @@
             <section class="col-12 col-xl-9">
                 @if (Model == null || Model.Count == 0)
                 {
-                    <div class="alert empty-category-alert">
-                        Няма продукти по тези филтри.
-                    </div>
+                    <div class="alert empty-category-alert">Няма продукти по тези филтри.</div>
                 }
                 else
                 {
@@ -278,9 +204,9 @@
                             <div class="col-12 col-sm-6 col-lg-4">
                                 <div class="category-product-card">
                                     <a class="category-card-link"
-                                           asp-controller="Client"
-                                           asp-action="Product"
-                                           asp-route-id="@p.Id">
+                                       asp-controller="Client"
+                                       asp-action="Product"
+                                       asp-route-id="@p.Id">
 
                                         <div class="category-product-img-wrap">
                                             <img src="@img" alt="@p.Name" class="category-product-img" />
@@ -305,10 +231,10 @@
                                             }
 
                                             <div class="category-product-meta">
-                                                <text>@mlText</text>
+                                                @mlText
                                                 @if (!string.IsNullOrWhiteSpace(p.PackageType))
                                                 {
-                                                    <text> • @p.PackageType</text>
+                                                    <span> • @p.PackageType</span>
                                                 }
                                             </div>
 
@@ -334,41 +260,32 @@
                                                 <input type="hidden" name="productId" value="@p.Id" />
                                                 <input type="hidden" name="qty" value="1" />
                                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                                <button type="submit" class="btn buy-btn w-100">
-                                                    Купи
-                                                </button>
+                                                <button type="submit" class="btn buy-btn w-100">Купи</button>
                                             </form>
-                                        }
-                                        else
-                                        {
-                                            <a class="btn buy-btn w-100 flex-fill"
-                                                   asp-area="Identity"
-                                                   asp-page="/Account/Login"
-                                                   asp-route-returnUrl="@returnUrl">
-                                                Купи
-                                            </a>
-                                        }
 
-                                        @if (User.Identity?.IsAuthenticated == true)
-                                        {
                                             <form asp-controller="Client" asp-action="ToggleFavorite" method="post">
                                                 @Html.AntiForgeryToken()
                                                 <input type="hidden" name="productId" value="@p.Id" />
                                                 <input type="hidden" name="returnUrl" value="@returnUrl" />
-                                                <button type="submit"
-                                                        class="btn fav-btn @(isFav ? "active" : "")"
-                                                        title="Любими">
+                                                <button type="submit" class="btn fav-btn @(isFav ? "active" : "")" title="Любими">
                                                     <i class="bi @(isFav ? "bi-heart-fill" : "bi-heart")"></i>
                                                 </button>
                                             </form>
                                         }
                                         else
                                         {
+                                            <a class="btn buy-btn w-100 flex-fill"
+                                               asp-area="Identity"
+                                               asp-page="/Account/Login"
+                                               asp-route-returnUrl="@returnUrl">
+                                                Купи
+                                            </a>
+
                                             <a class="btn fav-btn"
-                                                   asp-area="Identity"
-                                                   asp-page="/Account/Login"
-                                                   asp-route-returnUrl="@returnUrl"
-                                                   title="Любими">
+                                               asp-area="Identity"
+                                               asp-page="/Account/Login"
+                                               asp-route-returnUrl="@returnUrl"
+                                               title="Любими">
                                                 <i class="bi bi-heart"></i>
                                             </a>
                                         }
@@ -377,6 +294,81 @@
                             </div>
                         }
                     </div>
+
+                    @if (totalPages > 1)
+                    {
+                        <nav class="category-pagination-wrap mt-4 mt-lg-5">
+                            <ul class="pagination category-pagination justify-content-center flex-wrap">
+
+                                <li class="page-item @(page <= 1 ? "disabled" : "")">
+                                    <a class="page-link"
+                                       asp-controller="Client"
+                                       asp-action="Category"
+                                       asp-route-id="@routeId"
+                                       asp-route-page="@(page - 1)"
+                                       asp-route-q="@q"
+                                       asp-route-minPrice="@minPrice"
+                                       asp-route-maxPrice="@maxPrice"
+                                       asp-route-onlyAvailable="@onlyAvailable"
+                                       asp-route-onlyPromo="@onlyPromo"
+                                       asp-route-brandId="@brandId"
+                                       asp-route-minMl="@minMl"
+                                       asp-route-maxMl="@maxMl"
+                                       asp-route-packageType="@packageType"
+                                       asp-route-sort="@sort">
+                                        Назад
+                                    </a>
+                                </li>
+
+                                @for (int i = 1; i <= totalPages; i++)
+                                {
+                                    <li class="page-item @(i == page ? "active" : "")">
+                                        <a class="page-link"
+                                           asp-controller="Client"
+                                           asp-action="Category"
+                                           asp-route-id="@routeId"
+                                           asp-route-page="@i"
+                                           asp-route-q="@q"
+                                           asp-route-minPrice="@minPrice"
+                                           asp-route-maxPrice="@maxPrice"
+                                           asp-route-onlyAvailable="@onlyAvailable"
+                                           asp-route-onlyPromo="@onlyPromo"
+                                           asp-route-brandId="@brandId"
+                                           asp-route-minMl="@minMl"
+                                           asp-route-maxMl="@maxMl"
+                                           asp-route-packageType="@packageType"
+                                           asp-route-sort="@sort">
+                                            @i
+                                        </a>
+                                    </li>
+                                }
+
+                                <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                                    <a class="page-link"
+                                       asp-controller="Client"
+                                       asp-action="Category"
+                                       asp-route-id="@routeId"
+                                       asp-route-page="@(page + 1)"
+                                       asp-route-q="@q"
+                                       asp-route-minPrice="@minPrice"
+                                       asp-route-maxPrice="@maxPrice"
+                                       asp-route-onlyAvailable="@onlyAvailable"
+                                       asp-route-onlyPromo="@onlyPromo"
+                                       asp-route-brandId="@brandId"
+                                       asp-route-minMl="@minMl"
+                                       asp-route-maxMl="@maxMl"
+                                       asp-route-packageType="@packageType"
+                                       asp-route-sort="@sort">
+                                        Напред
+                                    </a>
+                                </li>
+
+                            </ul>
+                            <div class="pagination-info text-center mt-2 text-muted small">
+                                Страница <strong>@(page)</strong> от <strong>@(totalPages)</strong>
+                            </div>
+                        </nav>
+                    }
                 }
             </section>
         </div>
@@ -406,9 +398,10 @@
         margin: 0;
     }
 
-    .category-page-subtitle {
+    .category-page-subtitle,
+    .category-product-meta,
+    .pagination-info {
         color: #7c8492;
-        font-size: 1.08rem;
     }
 
     .filter-box {
@@ -444,31 +437,39 @@
         box-shadow: none !important;
     }
 
-        .filter-input:focus {
-            border-color: rgba(245,179,1,.55);
-            box-shadow: 0 0 0 .18rem rgba(245,179,1,.14) !important;
-            background: #fff;
-        }
+    .filter-input:focus {
+        border-color: rgba(245,179,1,.55);
+        box-shadow: 0 0 0 .18rem rgba(245,179,1,.14) !important;
+        background: #fff;
+    }
 
     .promo-check .form-check-input:checked {
         background-color: #f5b301;
         border-color: #f5b301;
     }
 
-    .apply-filter-btn {
+    .apply-filter-btn,
+    .buy-btn {
         background: linear-gradient(135deg, #1f2430, #2e3645);
         color: #fff;
         border: 0;
         border-radius: 999px;
-        padding: .85rem 1.2rem;
         font-weight: 800;
-        box-shadow: 0 12px 24px rgba(31, 36, 48, .18);
     }
 
-        .apply-filter-btn:hover {
-            background: linear-gradient(135deg, #161a23, #252d3a);
-            color: #fff;
-        }
+    .apply-filter-btn {
+        padding: .85rem 1.2rem;
+    }
+
+    .buy-btn {
+        padding: .78rem 1rem;
+    }
+
+    .apply-filter-btn:hover,
+    .buy-btn:hover {
+        background: linear-gradient(135deg, #161a23, #252d3a);
+        color: #fff;
+    }
 
     .clear-filter-btn {
         border-radius: 999px;
@@ -479,10 +480,10 @@
         padding: .45rem .9rem;
     }
 
-        .clear-filter-btn:hover {
-            background: #fff8ef;
-            color: #1f2430;
-        }
+    .clear-filter-btn:hover {
+        background: #fff8ef;
+        color: #1f2430;
+    }
 
     .empty-category-alert {
         background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,250,244,.96));
@@ -505,11 +506,11 @@
         transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
     }
 
-        .category-product-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 18px 36px rgba(40, 32, 24, .14);
-            border-color: rgba(245,179,1,.35);
-        }
+    .category-product-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(40, 32, 24, .14);
+        border-color: rgba(245,179,1,.35);
+    }
 
     .category-card-link {
         display: block;
@@ -559,7 +560,6 @@
 
     .category-product-meta {
         font-size: .86rem;
-        color: #7b8492;
         margin-top: 4px;
     }
 
@@ -596,20 +596,6 @@
         margin-top: auto;
     }
 
-    .buy-btn {
-        background: linear-gradient(135deg, #1f2430, #2e3645);
-        color: #fff;
-        border: 0;
-        border-radius: 999px;
-        padding: .78rem 1rem;
-        font-weight: 800;
-    }
-
-        .buy-btn:hover {
-            background: linear-gradient(135deg, #161a23, #252d3a);
-            color: #fff;
-        }
-
     .fav-btn {
         min-width: 48px;
         height: 48px;
@@ -622,45 +608,73 @@
         justify-content: center;
     }
 
-        .fav-btn:hover {
-            background: #fff5f6;
-            color: #c62839;
-        }
+    .fav-btn:hover {
+        background: #fff5f6;
+        color: #c62839;
+    }
 
-        .fav-btn.active {
-            background: #dc3545;
-            color: #fff;
-            border-color: #dc3545;
-        }
+    .fav-btn.active {
+        background: #dc3545;
+        color: #fff;
+        border-color: #dc3545;
+    }
 
-    .low-stock-badge {
+    .low-stock-badge,
+    .promo-badge-small {
         position: absolute;
         top: 12px;
-        left: 12px;
         z-index: 2;
         padding: 7px 11px;
         font-size: .76rem;
         font-weight: 900;
-        letter-spacing: .03em;
         border-radius: 12px;
+    }
+
+    .low-stock-badge {
+        left: 12px;
         background: linear-gradient(135deg, #ffc928, #f5b301);
         color: #111;
-        box-shadow: 0 10px 22px rgba(245,179,1,.24);
     }
 
     .promo-badge-small {
-        position: absolute;
-        top: 12px;
         right: 12px;
-        z-index: 2;
-        padding: 7px 11px;
-        font-size: .78rem;
-        font-weight: 900;
-        letter-spacing: .06em;
-        border-radius: 12px;
         background: linear-gradient(135deg, #cf1d2d, #a40f19);
         color: #fff;
-        box-shadow: 0 10px 22px rgba(173,11,22,.22);
+    }
+
+    .category-pagination {
+        gap: 8px;
+        margin-bottom: 10px;
+    }
+
+    .category-pagination .page-link {
+        border: 1px solid rgba(230, 220, 210, .95);
+        background: #fffdfa;
+        color: #273040;
+        border-radius: 999px;
+        min-width: 44px;
+        height: 44px;
+        padding: 0 15px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+    }
+
+    .category-pagination .page-link:hover {
+        background: #fff3df;
+        color: #1f2430;
+    }
+
+    .category-pagination .page-item.active .page-link {
+        background: linear-gradient(135deg, #1f2430, #2e3645);
+        border-color: #1f2430;
+        color: #fff;
+    }
+
+    .category-pagination .page-item.disabled .page-link {
+        opacity: .45;
+        pointer-events: none;
     }
 
     @@media (max-width: 1199px) {
@@ -672,11 +686,6 @@
     @@media (max-width: 991px) {
         .category-page-title {
             font-size: 2.4rem;
-        }
-
-        .category-hero,
-        .filter-box {
-            border-radius: 24px;
         }
 
         .category-product-img-wrap {

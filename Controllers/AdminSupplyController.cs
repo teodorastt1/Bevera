@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Bevera.Controllers
 {
@@ -461,8 +462,12 @@ namespace Bevera.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        [RequestFormLimits(ValueCountLimit = 20000)]
         public async Task<IActionResult> AddPurchaseOrderItem(PurchaseOrderItemCreateVm vm)
         {
+            if (vm.Items == null)
+                vm.Items = new List<PurchaseOrderItemBulkRowVm>();
+
             var po = await _db.PurchaseOrders
                 .Include(x => x.Items)
                 .Include(x => x.Distributor)
@@ -508,7 +513,6 @@ namespace Bevera.Controllers
                     continue;
 
                 var distributorProduct = await _db.DistributorProducts
-                    .Include(x => x.Product)
                     .FirstOrDefaultAsync(x => x.DistributorId == po.DistributorId && x.ProductId == row.ProductId);
 
                 if (distributorProduct == null)
@@ -527,28 +531,29 @@ namespace Bevera.Controllers
 
                 var appliedCostPrice = distributorProduct.CostPrice;
                 var requestedUnits = row.RequestedUnits;
-                var lineTotal = requestedUnits * appliedCostPrice;
+
+                if (requestedUnits <= 0)
+                    continue;
 
                 var existingItem = po.Items.FirstOrDefault(x => x.ProductId == row.ProductId);
+
                 if (existingItem != null)
                 {
                     existingItem.Quantity += requestedUnits;
-                    existingItem.LineTotal = existingItem.Quantity * appliedCostPrice;
                     existingItem.CostPrice = appliedCostPrice;
+                    existingItem.LineTotal = existingItem.Quantity * appliedCostPrice;
                 }
                 else
                 {
-                    var item = new PurchaseOrderItem
+                    _db.PurchaseOrderItems.Add(new PurchaseOrderItem
                     {
                         PurchaseOrderId = po.Id,
                         ProductId = product.Id,
                         ProductName = product.Name,
                         Quantity = requestedUnits,
                         CostPrice = appliedCostPrice,
-                        LineTotal = lineTotal
-                    };
-
-                    _db.PurchaseOrderItems.Add(item);
+                        LineTotal = requestedUnits * appliedCostPrice
+                    });
                 }
             }
 
@@ -557,6 +562,7 @@ namespace Bevera.Controllers
 
             TempData["Success"] = "Продуктите са добавени в черновата.";
             TempData["ToastScope"] = "admin";
+
             return RedirectToAction(nameof(PurchaseOrderDetails), new { id = po.Id });
         }
 
